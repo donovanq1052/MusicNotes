@@ -19,12 +19,15 @@ $note_type_selected = NoteType::QUARTER
 $sharp_selected = false
 $flat_selected = false
 $rest_selected = false
+$repeat = false
+$sheet_music_paused = false
 $notes = []
 $sharp = Gosu::Image.new("images/sharpsymbol.png")
 $flat = Gosu::Image.new("images/flatsymbol.png")
 $quarterrest = Gosu::Image.new("images/quarterrest.png")
 $eighthrest = Gosu::Image.new("images/eighthrest.png")
 $sixteenthrest = Gosu::Image.new("images/sixteenthrest.png")
+$repeatsymbol = Gosu::Image.new("images/repeat.png")
 $bpm = 90
 $last_note_type = NoteType::QUARTER
 $pointer_position = 0
@@ -69,7 +72,7 @@ class Note
     @note_type = note_type
     @note = note
     @is_rest = is_rest
-    if @is_rest == false
+    if !@is_rest
       @sound = Gosu::Sample.new("pianonotes/#{note}.mp3")
     else
       @sound = nil
@@ -105,12 +108,12 @@ end
 # Takes a Note to draw and draws it at it's position
 def draw_note(note)
   circle = Gosu::Image.new(Circle.new(10))
-  if note.is_rest == false
+  if !note.is_rest
     circle.draw(note.x_pos, note.y_pos, ZOrder::NOTE, 1.0, 1.0, BLACK)
   end
   case note.note_type
   when NoteType::QUARTER
-    if note.is_rest == true
+    if note.is_rest
       $quarterrest.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
     elsif note.y_pos <= 416
       draw_up_line(note.x_pos, note.y_pos)
@@ -118,8 +121,8 @@ def draw_note(note)
       draw_down_line(note.x_pos - 18, note.y_pos)
     end
   when NoteType::EIGTH
-    if note.is_rest == true
-      $eighthrest.draw(note.x_pos, 350, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
+    if note.is_rest
+      $eighthrest.draw(note.x_pos, 370, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
     elsif note.y_pos <= 416
       draw_up_line(note.x_pos, note.y_pos)
       draw_side_line(note.x_pos, note.y_pos - 40)
@@ -128,7 +131,7 @@ def draw_note(note)
       draw_side_line(note.x_pos - 34, note.y_pos + 50)
     end
   when NoteType::SIXTEENTH
-    if note.is_rest == true
+    if note.is_rest
       $sixteenthrest.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
     elsif note.y_pos <= 416
       draw_up_line(note.x_pos, note.y_pos)
@@ -141,7 +144,7 @@ def draw_note(note)
     end
   end
   # draws lines below the stave based on the note position if the note is not a rest
-  if note.is_rest == false
+  if !note.is_rest
     case note.y_pos
     when 191
       draw_sheet_line(note.x_pos, note.y_pos)
@@ -175,10 +178,10 @@ def draw_note(note)
       draw_sheet_line(note.x_pos, note.y_pos - 150)
     end
     # adds a sharp or a flat if selected if the note is not a rest
-    if note.sharp == true
+    if note.sharp
       $sharp.draw(note.x_pos - 20, note.y_pos, ZOrder::NOTE, scale_x = 0.015, scale_y = 0.015)
     end
-    if note.flat == true
+    if note.flat
       $flat.draw(note.x_pos - 20, note.y_pos - 10, ZOrder::NOTE, scale_x = 0.008, scale_y = 0.008)
     end
   end
@@ -196,7 +199,7 @@ end
 
 # draw a pointer that shows the note the sheet music is currently playing
 def draw_pointer()
-  if $sheet_music_playing == true
+  if $sheet_music_playing
     Gosu.draw_line($pointer_position + 10, 170, BLACK, $pointer_position + 10, 700, BLACK, ZOrder::NOTE)
   end
 end
@@ -217,8 +220,10 @@ def top_ui_actions(mouse_x)
   case mouse_x
   when 25..100
     play_sheet_music()
-  when 175..250
+  when 150..225
     stop_sheet_music()
+  when 260..340
+    pause_sheet_music()
   when 390..420
     select_note(NoteType::QUARTER)
     $rest_selected = false
@@ -229,16 +234,16 @@ def top_ui_actions(mouse_x)
     select_note(NoteType::SIXTEENTH)
     $rest_selected = false
   when 690..750
-    if $sharp_selected == false
+    if !$sharp_selected
       $sharp_selected = true
-    elsif $sharp_selected == true
+    elsif $sharp_selected
       $sharp_selected = false
     end
     $flat_selected = false
   when 790..830
-    if $flat_selected == false
+    if !$flat_selected
       $flat_selected = true
-    elsif $flat_selected == true
+    elsif $flat_selected
       $flat_selected = false
     end
     $sharp_selected = false
@@ -251,12 +256,15 @@ def top_ui_actions(mouse_x)
   when 1090..1140
     select_note(NoteType::SIXTEENTH)
     $rest_selected = true
+  when 1200..1300
+    repeat_sheet_music()
   end
+
 end
 
 # control the bpm of the piece with the scroll wheel, between 10 and 300
 def bpm_scroll(direction)
-  if mouse_x >= 1340 and mouse_x <= 1450
+  if mouse_x >= 1440 and mouse_x <= 1550
     if mouse_y >= 65 and mouse_y <= 105
       if direction == true
         if $bpm < 300
@@ -272,32 +280,59 @@ def bpm_scroll(direction)
 end
 
 def play_sheet_music
-  $sheet_music_playing = true
-  $pointer_position = 200
-  a_note_found = false
-  Thread.new do
-    while $pointer_position <= 1600 and $sheet_music_playing == true
-      for notes in $notes
-        if notes.x_pos == $pointer_position
-          a_note_found = true
-          if notes.is_rest == false
-            notes.sound.play
+  if $notes.length > 0
+    $sheet_music_playing = true
+    $pointer_position = 200
+    a_note_found = false
+    Thread.new do      
+      while $pointer_position <= 1600 and $sheet_music_playing
+        for notes in $notes
+          if notes.x_pos == $pointer_position
+            a_note_found = true
+            if !notes.is_rest
+              notes.sound.play
+            end
+            $last_note_type = notes.note_type
           end
-          $last_note_type = notes.note_type
         end
+        time_to_wait = (SECONDS / $bpm) / $last_note_type
+        if a_note_found
+          sleep time_to_wait
+          while $sheet_music_paused
+            sleep 0.3
+          end
+        end
+        $pointer_position += 80
+        a_note_found = false
       end
-      time_to_wait = (SECONDS / $bpm) / $last_note_type
-      if a_note_found == true
-        sleep time_to_wait
+      if $repeat and $sheet_music_playing and !$sheet_music_paused
+        $pointer_position = 200
+        play_sheet_music()
       end
-      $pointer_position += 80
-      a_note_found = false
     end
   end
 end
 
 def stop_sheet_music
   $sheet_music_playing = false
+end
+
+def pause_sheet_music
+  if $sheet_music_playing
+    if $sheet_music_paused
+      $sheet_music_paused = false
+    elsif !$sheet_music_paused
+      $sheet_music_paused = true
+    end
+  end
+end
+
+def repeat_sheet_music
+  if !$repeat
+   $repeat = true
+  elsif $repeat
+    $repeat = false
+  end
 end
 
 def select_note(note_number)
@@ -308,13 +343,13 @@ def create_note(mouse_x, mouse_y)
   note_x = return_note_x(mouse_x)
   note_value_index = return_note_y(mouse_y)
   if mouse_x > 180
-    if $sharp_selected == true
+    if $sharp_selected
       note_value_index[1] -= 1
-    elsif $flat_selected == true
+    elsif $flat_selected
       note_value_index[1] += 1
     end
     note = Note.new(note_x, note_value_index[0], $sharp_selected, $flat_selected, $note_type_selected, assign_note_sound(note_value_index[1]), $rest_selected)
-    if note.is_rest == false
+    if !note.is_rest
       note.sound.play
     end
     for notes in $notes
@@ -324,23 +359,23 @@ def create_note(mouse_x, mouse_y)
       if notes.x_pos == note.x_pos and notes.y_pos == note.y_pos
         $notes.delete(notes)
       end
-      if notes.x_pos == note.x_pos and (notes.is_rest == true or note.is_rest == true)
+      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
         $notes.delete(notes)
       end
     end
     # For some reason this does not remove every single note when the for loop is called once or even twice, so it's done here twice and this works. I have no idea why this happens.
     for notes in $notes
-      if notes.x_pos == note.x_pos and (notes.is_rest == true or note.is_rest == true)
+      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
         $notes.delete(notes)
       end
     end
     for notes in $notes
-      if notes.x_pos == note.x_pos and (notes.is_rest == true or note.is_rest == true)
+      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
         $notes.delete(notes)
       end
     end
     for notes in $notes
-      if notes.x_pos == note.x_pos and (notes.is_rest == true or note.is_rest == true)
+      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
         $notes.delete(notes)
       end
     end
@@ -404,7 +439,6 @@ class MusicNotesMain < Gosu::Window
       #window size
 	  	super 1600, 800
 	  	self.caption = "MusicNotes"
-      self.text_input = Gosu::TextInput.new
 	end
 
   #draw the white background
@@ -417,9 +451,12 @@ class MusicNotesMain < Gosu::Window
     #top and bottom panels
     Gosu.draw_quad(0, 0, UI_COLOUR, 1600, 0, UI_COLOUR, 0, 150, UI_COLOUR, 1600, 150, UI_COLOUR, ZOrder::UI)
     Gosu.draw_quad(0, 750, UI_COLOUR, 1600, 750, UI_COLOUR, 0, 800, UI_COLOUR, 1600, 800, UI_COLOUR, ZOrder::UI)
-    # play and stop buttons
+    # play, stop, repeat and pause buttons
     Gosu.draw_triangle(100, 80, BLACK, 25, 125, BLACK, 25, 40, BLACK, ZOrder::UI)
-    Gosu.draw_quad(175, 50, BLACK, 250, 50, BLACK, 250, 125, BLACK, 175, 125, BLACK, ZOrder::UI)
+    Gosu.draw_quad(150, 50, BLACK, 225, 50, BLACK, 225, 125, BLACK, 150, 125, BLACK, ZOrder::UI)
+    Gosu.draw_quad(275, 50, BLACK, 300, 50, BLACK, 300, 125, BLACK, 275, 125, BLACK, ZOrder::UI)
+    Gosu.draw_quad(315, 50, BLACK, 340, 50, BLACK, 340, 125, BLACK, 315, 125, BLACK, ZOrder::UI)
+    $repeatsymbol.draw(NOTES_UI_START + 800, 70, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
     # note selection options
     ui_quarter = Note.new(NOTES_UI_START, 100, false, false, NoteType::QUARTER, "C5", false)
     ui_eigth = Note.new(NOTES_UI_START + 100, 100, false, false, NoteType::EIGTH, "C5", false)
@@ -433,12 +470,13 @@ class MusicNotesMain < Gosu::Window
     $eighthrest.draw(NOTES_UI_START + 600, 30, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
     $sixteenthrest.draw(NOTES_UI_START + 700, 50, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
     #bpm, and bottom of screen fonts
-    Gosu.draw_quad(1340, 65, WHITE, 1450, 65, WHITE, 1450, 105, WHITE, 1340, 105, WHITE, ZOrder::UI)
+    Gosu.draw_quad(1440, 65, WHITE, 1550, 65, WHITE, 1550, 105, WHITE, 1440, 105, WHITE, ZOrder::UI)
     font = Gosu::Font.new(30)
-    font.draw_text("BPM:", 1250, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    font.draw_text($bpm, 1350, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    font.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    font.draw_text($bpm, NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     font.draw_text("MusicNotes: A simple music notation software.", 50, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     font.draw_text("Made by Donovan Quilty", 1200, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    font.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   end
 
   #draw the blank sheet music
@@ -459,31 +497,38 @@ class MusicNotesMain < Gosu::Window
   def draw_selected
     case $note_type_selected
     when NoteType::QUARTER
-      if $rest_selected == true
+      if $rest_selected
         draw_box(NOTES_UI_START + 492)
       else
         draw_box(NOTES_UI_START - 8)
       end
     when NoteType::EIGTH
-      if $rest_selected == true
+      if $rest_selected
         draw_box(NOTES_UI_START + 592)
       else
         draw_box(NOTES_UI_START + 92)
       end
     when NoteType::SIXTEENTH
-      if $rest_selected == true
+      if $rest_selected
         draw_box(NOTES_UI_START + 692)
       else
         draw_box(NOTES_UI_START + 192)
       end
     end
+    if $repeat
+      Gosu.draw_line(1200, 125, BLACK, 1300, 125, BLACK, ZOrder::UI)
+    end
+    if $sheet_music_paused
+      Gosu.draw_line(270, 130, BLACK, 345, 130, BLACK, ZOrder::UI)
+      Gosu.draw_line(270, 131, BLACK, 345, 131, BLACK, ZOrder::UI)
+    end
   end
 
   
   def draw_sharp_or_flat_selection
-    if $sharp_selected == true
+    if $sharp_selected
       draw_box(NOTES_UI_START + 296)
-    elsif $flat_selected == true
+    elsif $flat_selected
       draw_box(NOTES_UI_START + 392)
     end
   end
