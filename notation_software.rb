@@ -6,6 +6,12 @@ BLACK = Gosu::Color::BLACK
 WHITE = Gosu::Color::WHITE
 SECONDS = 60.0
 NOTES_UI_START = 400
+SHARP = Gosu::Image.new("images/sharpsymbol.png")
+FLAT = Gosu::Image.new("images/flatsymbol.png")
+QUARTER_REST = Gosu::Image.new("images/quarterrest.png")
+EIGTH_REST = Gosu::Image.new("images/eighthrest.png")
+SIXTEENTH_REST = Gosu::Image.new("images/sixteenthrest.png")
+REPEAT_SYMBOL = Gosu::Image.new("images/repeat.png")
 
 module ZOrder
   BACKGROUND, UI, SHEET, NOTE = *0..3
@@ -15,6 +21,7 @@ module NoteType
   QUARTER, EIGTH, SIXTEENTH = *1..3
 end
 
+
 $note_type_selected = NoteType::QUARTER
 $sharp_selected = false
 $flat_selected = false
@@ -22,12 +29,6 @@ $rest_selected = false
 $repeat = false
 $sheet_music_paused = false
 $notes = []
-$sharp = Gosu::Image.new("images/sharpsymbol.png")
-$flat = Gosu::Image.new("images/flatsymbol.png")
-$quarterrest = Gosu::Image.new("images/quarterrest.png")
-$eighthrest = Gosu::Image.new("images/eighthrest.png")
-$sixteenthrest = Gosu::Image.new("images/sixteenthrest.png")
-$repeatsymbol = Gosu::Image.new("images/repeat.png")
 $bpm = 90
 $last_note_type = NoteType::QUARTER
 $pointer_position = 0
@@ -59,6 +60,9 @@ class Circle
     @blob
   end
 end
+
+# initialize one circle to be used in draw_note
+CIRCLE = Gosu::Image.new(Circle.new(10))
 
 #Create a class Note that has its location and note values
 class Note
@@ -107,14 +111,13 @@ end
 
 # Takes a Note to draw and draws it at it's position
 def draw_note(note)
-  circle = Gosu::Image.new(Circle.new(10))
   if !note.is_rest
-    circle.draw(note.x_pos, note.y_pos, ZOrder::NOTE, 1.0, 1.0, BLACK)
+    CIRCLE.draw(note.x_pos, note.y_pos, ZOrder::NOTE, 1.0, 1.0, BLACK)
   end
   case note.note_type
   when NoteType::QUARTER
     if note.is_rest
-      $quarterrest.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
+      QUARTER_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
     elsif note.y_pos <= 416
       draw_up_line(note.x_pos, note.y_pos)
     elsif note.y_pos > 416
@@ -122,7 +125,7 @@ def draw_note(note)
     end
   when NoteType::EIGTH
     if note.is_rest
-      $eighthrest.draw(note.x_pos, 370, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
+      EIGTH_REST.draw(note.x_pos, 370, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
     elsif note.y_pos <= 416
       draw_up_line(note.x_pos, note.y_pos)
       draw_side_line(note.x_pos, note.y_pos - 40)
@@ -132,7 +135,7 @@ def draw_note(note)
     end
   when NoteType::SIXTEENTH
     if note.is_rest
-      $sixteenthrest.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
+      SIXTEENTH_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
     elsif note.y_pos <= 416
       draw_up_line(note.x_pos, note.y_pos)
       draw_side_line(note.x_pos, (note.y_pos - 40))
@@ -179,10 +182,10 @@ def draw_note(note)
     end
     # adds a sharp or a flat if selected if the note is not a rest
     if note.sharp
-      $sharp.draw(note.x_pos - 20, note.y_pos, ZOrder::NOTE, scale_x = 0.015, scale_y = 0.015)
+      SHARP.draw(note.x_pos - 20, note.y_pos, ZOrder::NOTE, scale_x = 0.015, scale_y = 0.015)
     end
     if note.flat
-      $flat.draw(note.x_pos - 20, note.y_pos - 10, ZOrder::NOTE, scale_x = 0.008, scale_y = 0.008)
+      FLAT.draw(note.x_pos - 20, note.y_pos - 10, ZOrder::NOTE, scale_x = 0.008, scale_y = 0.008)
     end
   end
 end
@@ -437,7 +440,7 @@ class MusicNotesMain < Gosu::Window
 
 	def initialize
       #window size
-	  	super 1600, 800, false, 5
+	  	super 1600, 800
 	  	self.caption = "MusicNotes"
 	end
 
@@ -456,7 +459,7 @@ class MusicNotesMain < Gosu::Window
     Gosu.draw_quad(150, 50, BLACK, 225, 50, BLACK, 225, 125, BLACK, 150, 125, BLACK, ZOrder::UI)
     Gosu.draw_quad(275, 50, BLACK, 300, 50, BLACK, 300, 125, BLACK, 275, 125, BLACK, ZOrder::UI)
     Gosu.draw_quad(315, 50, BLACK, 340, 50, BLACK, 340, 125, BLACK, 315, 125, BLACK, ZOrder::UI)
-    $repeatsymbol.draw(NOTES_UI_START + 800, 70, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
+    REPEAT_SYMBOL.draw(NOTES_UI_START + 800, 70, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
     # note selection options
     ui_quarter = Note.new(NOTES_UI_START, 100, false, false, NoteType::QUARTER, "C5", false)
     ui_eigth = Note.new(NOTES_UI_START + 100, 100, false, false, NoteType::EIGTH, "C5", false)
@@ -464,11 +467,11 @@ class MusicNotesMain < Gosu::Window
     draw_note(ui_quarter)
     draw_note(ui_eigth)
     draw_note(ui_sixteenth)
-    $sharp.draw(NOTES_UI_START + 300, 70, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
-    $flat.draw(NOTES_UI_START + 400, 60, ZOrder::UI, scale_x = 0.015, scale_y = 0.015)
-    $quarterrest.draw(NOTES_UI_START + 500, 56, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
-    $eighthrest.draw(NOTES_UI_START + 600, 30, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
-    $sixteenthrest.draw(NOTES_UI_START + 700, 50, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
+    SHARP.draw(NOTES_UI_START + 300, 70, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
+    FLAT.draw(NOTES_UI_START + 400, 60, ZOrder::UI, scale_x = 0.015, scale_y = 0.015)
+    QUARTER_REST.draw(NOTES_UI_START + 500, 56, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
+    EIGTH_REST.draw(NOTES_UI_START + 600, 30, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
+    SIXTEENTH_REST.draw(NOTES_UI_START + 700, 50, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
     #bpm, and bottom of screen fonts
     Gosu.draw_quad(1440, 65, WHITE, 1550, 65, WHITE, 1550, 105, WHITE, 1440, 105, WHITE, ZOrder::UI)
     font = Gosu::Font.new(30)
