@@ -543,10 +543,8 @@ class MusicNotesMain < Gosu::Window
     draw_background()
     draw_ui()
     draw_sheet()
-    index = 0
-    while index < $notes.length
-      draw_note($notes[index])
-      index += 1
+    for note in $notes
+      draw_note(note)
     end
     draw_selected()
     draw_sharp_or_flat_selection()
