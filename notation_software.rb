@@ -437,7 +437,7 @@ class MusicNotesMain < Gosu::Window
 
 	def initialize
       #window size
-	  	super 1600, 800
+	  	super 1600, 800, false, 5
 	  	self.caption = "MusicNotes"
 	end
 
