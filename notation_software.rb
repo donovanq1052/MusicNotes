@@ -20,6 +20,8 @@ QUARTER_REST = Gosu::Image.new("images/quarterrest.png")
 EIGTH_REST = Gosu::Image.new("images/eighthrest.png")
 SIXTEENTH_REST = Gosu::Image.new("images/sixteenthrest.png")
 REPEAT_SYMBOL = Gosu::Image.new("images/repeat.png")
+TREBLECLEF = Gosu::Image.new("images/trebleclef.png")
+FONT = Gosu::Font.new(30)
 BUTTONS = {
 "Note Type Selected" => NoteType::QUARTER,
 "Sharp Selected" => false, "Flat Selected" => false,
@@ -78,6 +80,11 @@ class Note
     end
   end
 end
+
+# create notes to be drawn in the UI menu
+UI_QUARTER = Note.new(NOTES_UI_START, 100, false, false, NoteType::QUARTER, "C5", false)
+UI_EIGTH = Note.new(NOTES_UI_START + 100, 100, false, false, NoteType::EIGTH, "C5", false)
+UI_SIXTEENTH = Note.new(NOTES_UI_START + 200, 100, false, false, NoteType::SIXTEENTH, "C5", false)
 
 # draws a vertical line up
 def draw_up_line(x_pos, y_pos)
@@ -457,12 +464,9 @@ class MusicNotesMain < Gosu::Window
     Gosu.draw_quad(315, 50, BLACK, 340, 50, BLACK, 340, 125, BLACK, 315, 125, BLACK, ZOrder::UI)
     REPEAT_SYMBOL.draw(NOTES_UI_START + 800, 70, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
     # note selection options
-    ui_quarter = Note.new(NOTES_UI_START, 100, false, false, NoteType::QUARTER, "C5", false)
-    ui_eigth = Note.new(NOTES_UI_START + 100, 100, false, false, NoteType::EIGTH, "C5", false)
-    ui_sixteenth = Note.new(NOTES_UI_START + 200, 100, false, false, NoteType::SIXTEENTH, "C5", false)
-    draw_note(ui_quarter)
-    draw_note(ui_eigth)
-    draw_note(ui_sixteenth)
+    draw_note(UI_QUARTER)
+    draw_note(UI_EIGTH)
+    draw_note(UI_SIXTEENTH)
     SHARP.draw(NOTES_UI_START + 300, 70, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
     FLAT.draw(NOTES_UI_START + 400, 60, ZOrder::UI, scale_x = 0.015, scale_y = 0.015)
     QUARTER_REST.draw(NOTES_UI_START + 500, 56, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
@@ -470,12 +474,11 @@ class MusicNotesMain < Gosu::Window
     SIXTEENTH_REST.draw(NOTES_UI_START + 700, 50, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
     #bpm, and bottom of screen fonts
     Gosu.draw_quad(1440, 65, WHITE, 1550, 65, WHITE, 1550, 105, WHITE, 1440, 105, WHITE, ZOrder::UI)
-    font = Gosu::Font.new(30)
-    font.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    font.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    font.draw_text("MusicNotes: A simple music notation software.", 50, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    font.draw_text("Made by Donovan Quilty", 1200, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    font.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("MusicNotes: A simple music notation software.", 50, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("Made by Donovan Quilty", 1200, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   end
 
   #draw the blank sheet music
@@ -485,9 +488,7 @@ class MusicNotesMain < Gosu::Window
     Gosu.draw_line(0, 400, BLACK, 1600, 400, BLACK, ZOrder::SHEET)
     Gosu.draw_line(0, 450, BLACK, 1600, 450, BLACK, ZOrder::SHEET)
     Gosu.draw_line(0, 500, BLACK, 1600, 500, BLACK, ZOrder::SHEET)
-    #trebleclef
-    trebleclef = Gosu::Image.new("images/trebleclef.png")
-    trebleclef.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
+    TREBLECLEF.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
     #start of sheet music
     Gosu.draw_quad(170, 300, BLACK, 175, 300, BLACK, 170, 500, BLACK, 175, 500, BLACK, ZOrder::SHEET)
   end
