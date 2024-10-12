@@ -1,6 +1,14 @@
 require 'rubygems'
 require 'gosu'
 
+module ZOrder
+  BACKGROUND, UI, SHEET, NOTE = *0..3
+end
+
+module NoteType
+  QUARTER, EIGTH, SIXTEENTH = *1..3
+end
+
 UI_COLOUR = Gosu::Color.new(0xFF1EB1FA)
 BLACK = Gosu::Color::BLACK
 WHITE = Gosu::Color::WHITE
@@ -12,27 +20,14 @@ QUARTER_REST = Gosu::Image.new("images/quarterrest.png")
 EIGTH_REST = Gosu::Image.new("images/eighthrest.png")
 SIXTEENTH_REST = Gosu::Image.new("images/sixteenthrest.png")
 REPEAT_SYMBOL = Gosu::Image.new("images/repeat.png")
-
-module ZOrder
-  BACKGROUND, UI, SHEET, NOTE = *0..3
-end
-
-module NoteType
-  QUARTER, EIGTH, SIXTEENTH = *1..3
-end
-
-
-$note_type_selected = NoteType::QUARTER
-$sharp_selected = false
-$flat_selected = false
-$rest_selected = false
-$repeat = false
-$sheet_music_paused = false
-$notes = []
-$bpm = 90
-$last_note_type = NoteType::QUARTER
-$pointer_position = 0
-
+BUTTONS = {
+"Note Type Selected" => NoteType::QUARTER,
+"Sharp Selected" => false, "Flat Selected" => false,
+"Rest Selected" => false, "Repeat" => false,
+"Sheet Music Paused" => false, "BPM" => 90,
+"Pointer Position" => 0, "Sheet Music Playing" => false
+}
+NOTES = []
 
 ######################### THIS SHOULD BE IN MUSIC_NOTES.RB BUT IT WON'T WORK TO USE IT FROM THERE ##############
 #THIS IS TO FIX LATER - TALK TO DR MITCHELL OR SOMETHING
@@ -202,8 +197,8 @@ end
 
 # draw a pointer that shows the note the sheet music is currently playing
 def draw_pointer()
-  if $sheet_music_playing
-    Gosu.draw_line($pointer_position + 10, 170, BLACK, $pointer_position + 10, 700, BLACK, ZOrder::NOTE)
+  if BUTTONS["Sheet Music Playing"]
+    Gosu.draw_line(BUTTONS["Pointer Position"] + 10, 170, BLACK, BUTTONS["Pointer Position"] + 10, 700, BLACK, ZOrder::NOTE)
   end
 end
 
@@ -229,36 +224,36 @@ def top_ui_actions(mouse_x)
     pause_sheet_music()
   when 390..420
     select_note(NoteType::QUARTER)
-    $rest_selected = false
+    BUTTONS["Rest Selected"] = false
   when 490..520
     select_note(NoteType::EIGTH)
-    $rest_selected = false
+    BUTTONS["Rest Selected"] = false
   when 590..620
     select_note(NoteType::SIXTEENTH)
-    $rest_selected = false
+    BUTTONS["Rest Selected"] = false
   when 690..750
-    if !$sharp_selected
-      $sharp_selected = true
-    elsif $sharp_selected
-      $sharp_selected = false
+    if !BUTTONS["Sharp Selected"]
+      BUTTONS["Sharp Selected"] = true
+    elsif BUTTONS["Sharp Selected"]
+      BUTTONS["Sharp Selected"] = false
     end
-    $flat_selected = false
+    BUTTONS["Flat Selected"] = false
   when 790..830
-    if !$flat_selected
-      $flat_selected = true
-    elsif $flat_selected
-      $flat_selected = false
+    if !BUTTONS["Flat Selected"]
+      BUTTONS["Flat Selected"] = true
+    elsif BUTTONS["Flat Selected"]
+      BUTTONS["Flat Selected"] = false
     end
-    $sharp_selected = false
+    BUTTONS["Sharp Selected"] = false
   when 890..940
     select_note(NoteType::QUARTER)
-    $rest_selected = true
+    BUTTONS["Rest Selected"] = true
   when 990..1040
     select_note(NoteType::EIGTH)
-    $rest_selected = true
+    BUTTONS["Rest Selected"] = true
   when 1090..1140
     select_note(NoteType::SIXTEENTH)
-    $rest_selected = true
+    BUTTONS["Rest Selected"] = true
   when 1200..1300
     repeat_sheet_music()
   end
@@ -270,12 +265,12 @@ def bpm_scroll(direction)
   if mouse_x >= 1440 and mouse_x <= 1550
     if mouse_y >= 65 and mouse_y <= 105
       if direction == true
-        if $bpm < 300
-          $bpm += 1
+        if BUTTONS["BPM"] < 300
+          BUTTONS["BPM"] += 1
         end
       elsif direction == false
-        if $bpm > 10
-          $bpm -= 1
+        if BUTTONS["BPM"] > 10
+          BUTTONS["BPM"] -= 1
         end
       end
     end
@@ -283,33 +278,34 @@ def bpm_scroll(direction)
 end
 
 def play_sheet_music
-  if $notes.length > 0
-    $sheet_music_playing = true
-    $pointer_position = 200
+  if NOTES.length > 0
+    BUTTONS["Sheet Music Playing"] = true
+    BUTTONS["Pointer Position"] = 200
+    last_note_type = NoteType::QUARTER
     a_note_found = false
     Thread.new do      
-      while $pointer_position <= 1600 and $sheet_music_playing
-        for notes in $notes
-          if notes.x_pos == $pointer_position
+      while BUTTONS["Pointer Position"] <= 1600 and BUTTONS["Sheet Music Playing"]
+        for notes in NOTES
+          if notes.x_pos == BUTTONS["Pointer Position"]
             a_note_found = true
             if !notes.is_rest
               notes.sound.play
             end
-            $last_note_type = notes.note_type
+            last_note_type = notes.note_type
           end
         end
-        time_to_wait = (SECONDS / $bpm) / $last_note_type
+        time_to_wait = (SECONDS / BUTTONS["BPM"]) / last_note_type
         if a_note_found
           sleep time_to_wait
-          while $sheet_music_paused
+          while BUTTONS["Sheet Music Paused"]
             sleep 0.3
           end
         end
-        $pointer_position += 80
+        BUTTONS["Pointer Position"] += 80
         a_note_found = false
       end
-      if $repeat and $sheet_music_playing and !$sheet_music_paused
-        $pointer_position = 200
+      if BUTTONS["Repeat"] and BUTTONS["Sheet Music Playing"] and !BUTTONS["Sheet Music Paused"]
+        BUTTONS["Pointer Position"] = 200
         play_sheet_music()
       end
     end
@@ -317,81 +313,81 @@ def play_sheet_music
 end
 
 def stop_sheet_music
-  $sheet_music_playing = false
+  BUTTONS["Sheet Music Playing"] = false
 end
 
 def pause_sheet_music
-  if $sheet_music_playing
-    if $sheet_music_paused
-      $sheet_music_paused = false
-    elsif !$sheet_music_paused
-      $sheet_music_paused = true
+  if BUTTONS["Sheet Music Playing"]
+    if BUTTONS["Sheet Music Paused"]
+      BUTTONS["Sheet Music Paused"] = false
+    elsif !BUTTONS["Sheet Music Paused"]
+      BUTTONS["Sheet Music Paused"] = true
     end
   end
 end
 
 def repeat_sheet_music
-  if !$repeat
-   $repeat = true
-  elsif $repeat
-    $repeat = false
+  if !BUTTONS["Repeat"]
+    BUTTONS["Repeat"] = true
+  elsif BUTTONS["Repeat"]
+    BUTTONS["Repeat"] = false
   end
 end
 
 def select_note(note_number)
-  $note_type_selected = note_number
+  BUTTONS["Note Type Selected"] = note_number
 end
 
 def create_note(mouse_x, mouse_y)
   note_x = return_note_x(mouse_x)
   note_value_index = return_note_y(mouse_y)
   if mouse_x > 180
-    if $sharp_selected
+    if BUTTONS["Sharp Selected"]
       note_value_index[1] -= 1
-    elsif $flat_selected
+    elsif BUTTONS["Flat Selected"]
       note_value_index[1] += 1
     end
-    note = Note.new(note_x, note_value_index[0], $sharp_selected, $flat_selected, $note_type_selected, assign_note_sound(note_value_index[1]), $rest_selected)
+    note = Note.new(note_x, note_value_index[0], BUTTONS["Sharp Selected"], BUTTONS["Flat Selected"], BUTTONS["Note Type Selected"], assign_note_sound(note_value_index[1]), BUTTONS["Rest Selected"])
     if !note.is_rest
       note.sound.play
     end
-    for notes in $notes
+    for notes in NOTES
       if notes.x_pos == note.x_pos
         notes.note_type = note.note_type
       end
       if notes.x_pos == note.x_pos and notes.y_pos == note.y_pos
-        $notes.delete(notes)
+        NOTES.delete(notes)
       end
       if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        $notes.delete(notes)
+        NOTES.delete(notes)
       end
     end
     # For some reason this does not remove every single note when the for loop is called once or even twice, so it's done here twice and this works. I have no idea why this happens.
-    for notes in $notes
+    for notes in NOTES
       if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        $notes.delete(notes)
+        NOTES.delete(notes)
       end
     end
-    for notes in $notes
+    for notes in NOTES
       if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        $notes.delete(notes)
+        NOTES.delete(notes)
       end
     end
-    for notes in $notes
+    for notes in NOTES
       if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        $notes.delete(notes)
+        NOTES.delete(notes)
       end
     end
-    $notes << note
+    NOTES << note
   end
 end
 
 def remove_note(mouse_x, mouse_y)
   x_pos = return_note_x(mouse_x)
   y_pos = return_note_y(mouse_y)
-  for note in $notes
+  for note in NOTES
     if x_pos == note.x_pos and y_pos[0] == note.y_pos
-      $notes.delete(note)
+      NOTES.delete(note)
     end
   end
 end
@@ -476,7 +472,7 @@ class MusicNotesMain < Gosu::Window
     Gosu.draw_quad(1440, 65, WHITE, 1550, 65, WHITE, 1550, 105, WHITE, 1440, 105, WHITE, ZOrder::UI)
     font = Gosu::Font.new(30)
     font.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    font.draw_text($bpm, NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    font.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     font.draw_text("MusicNotes: A simple music notation software.", 50, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     font.draw_text("Made by Donovan Quilty", 1200, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     font.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
@@ -498,30 +494,30 @@ class MusicNotesMain < Gosu::Window
 
   #draw a border around the note currently selected in the UI
   def draw_selected
-    case $note_type_selected
+    case BUTTONS["Note Type Selected"]
     when NoteType::QUARTER
-      if $rest_selected
+      if BUTTONS["Rest Selected"]
         draw_box(NOTES_UI_START + 492)
       else
         draw_box(NOTES_UI_START - 8)
       end
     when NoteType::EIGTH
-      if $rest_selected
+      if BUTTONS["Rest Selected"]
         draw_box(NOTES_UI_START + 592)
       else
         draw_box(NOTES_UI_START + 92)
       end
     when NoteType::SIXTEENTH
-      if $rest_selected
+      if BUTTONS["Rest Selected"]
         draw_box(NOTES_UI_START + 692)
       else
         draw_box(NOTES_UI_START + 192)
       end
     end
-    if $repeat
+    if BUTTONS["Repeat"]
       Gosu.draw_line(1200, 125, BLACK, 1300, 125, BLACK, ZOrder::UI)
     end
-    if $sheet_music_paused
+    if BUTTONS["Sheet Music Paused"]
       Gosu.draw_line(270, 130, BLACK, 345, 130, BLACK, ZOrder::UI)
       Gosu.draw_line(270, 131, BLACK, 345, 131, BLACK, ZOrder::UI)
     end
@@ -529,9 +525,9 @@ class MusicNotesMain < Gosu::Window
 
   
   def draw_sharp_or_flat_selection
-    if $sharp_selected
+    if BUTTONS["Sharp Selected"]
       draw_box(NOTES_UI_START + 296)
-    elsif $flat_selected
+    elsif BUTTONS["Flat Selected"]
       draw_box(NOTES_UI_START + 392)
     end
   end
@@ -546,7 +542,7 @@ class MusicNotesMain < Gosu::Window
     draw_background()
     draw_ui()
     draw_sheet()
-    for note in $notes
+    for note in NOTES
       draw_note(note)
     end
     draw_selected()
