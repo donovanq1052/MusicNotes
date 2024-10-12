@@ -21,8 +21,11 @@ PAUSE ADDED
 CIRCLES FIXED
 
 THINGS TO DO:
+<<<<<<< Updated upstream
 $last_note_type should be able to be made entirely local
 SORT OUT ALL THE GLOBAL VARIABLES
+=======
+>>>>>>> Stashed changes
 SEE IF IT CAN SCROLL
 LINK SAME TYPE OF NOTES NEXT TO EACHOTHER TOGETHER
 ADD A SAVE FEATURE
