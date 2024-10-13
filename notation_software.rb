@@ -27,7 +27,8 @@ BUTTONS = {
 "Sharp Selected" => false, "Flat Selected" => false,
 "Rest Selected" => false, "Repeat" => false,
 "Sheet Music Paused" => false, "BPM" => 90,
-"Pointer Position" => 0, "Sheet Music Playing" => false
+"Pointer Position" => 0, "Sheet Music Playing" => false,
+"Saved" => "Save"
 }
 NOTES = []
 
@@ -148,6 +149,18 @@ def draw_note(note)
       draw_side_line(note.x_pos - 34, note.y_pos + 40)
     end
   end
+  # DONT FORGET ABOUT THIS - PROTOTYPE TO LINK NOTES
+ #if !note.is_rest
+   # for other_notes in NOTES
+     # if note.x_pos - 80 == other_notes.x_pos
+       # if note.y_pos == other_notes.y_pos
+         # if note.note_type == other_notes.note_type
+          # Gosu.draw_line(other_notes.x_pos, other_notes.y_pos - 40, BLACK, note.x_pos, note.y_pos - 40, BLACK, ZOrder::NOTE)
+         # end
+       # end
+     # end
+   # end
+  #end
   # draws lines below the stave based on the note position if the note is not a rest
   if !note.is_rest
     case note.y_pos
@@ -216,8 +229,10 @@ def main_selector(mouse_x, mouse_y)
     if mouse_y > 35
       top_ui_actions(mouse_x)
     end
-  elsif mouse_y >= 187.5
+  elsif mouse_y >= 187.5 and mouse_y < 730
     create_note(mouse_x, mouse_y)
+  elsif mouse_y >= 755
+    bottom_ui_actions(mouse_x)
   end
 end
 
@@ -365,25 +380,16 @@ def create_note(mouse_x, mouse_y)
       if notes.x_pos == note.x_pos and notes.y_pos == note.y_pos
         NOTES.delete(notes)
       end
-      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        NOTES.delete(notes)
-      end
     end
-    # For some reason this does not remove every single note when the for loop is called once or even twice, so it's done here twice and this works. I have no idea why this happens.
-    for notes in NOTES
-      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        NOTES.delete(notes)
+    # For some reason this does not remove every single note when the for loop is called once or even twice, so i've put it in a while loop to run 10 times. I don't know why this happens but it works
+    index = 10
+    while index > 0
+      for notes in NOTES
+        if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
+          NOTES.delete(notes)
+        end
       end
-    end
-    for notes in NOTES
-      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        NOTES.delete(notes)
-      end
-    end
-    for notes in NOTES
-      if notes.x_pos == note.x_pos and (notes.is_rest or note.is_rest)
-        NOTES.delete(notes)
-      end
+      index -= 1
     end
     NOTES << note
   end
@@ -439,6 +445,59 @@ def assign_note_sound(note_value)
   return note_array[note_value]
 end
 
+def bottom_ui_actions(x_pos)
+  case x_pos
+  when 700..775
+    save_sheet_music()
+  when 900..975
+    load_sheet_music()
+  end
+end
+
+# saves the information of each note into a txt file
+def save_sheet_music()
+  save_file = File.new("savefile.txt", "w")
+  save_file.puts(NOTES.length)
+  for note in NOTES
+    save_file.puts(note.x_pos)
+    save_file.puts(note.y_pos)
+    save_file.puts(note.sharp)
+    save_file.puts(note.flat)
+    save_file.puts(note.note_type)
+    save_file.puts(note.note)
+    save_file.puts(note.is_rest)
+  end
+  Thread.new do
+    BUTTONS["Saved"] = "Music Saved!"
+    sleep(2)
+    BUTTONS["Saved"] = "Save"
+  end
+end
+
+def load_sheet_music()
+  load_file = File.new("savefile.txt", "r")
+  index = load_file.gets.to_i()
+  counter = 0
+  for note in NOTES
+    NOTES.delete(note)
+  end
+  while counter < index
+    x_pos = load_file.gets.to_i()
+    y_pos = load_file.gets.to_i()
+    sharp = convert_string_to_boolean(load_file.gets())
+    flat = convert_string_to_boolean(load_file.gets())
+    note_type = load_file.gets.to_i()
+    note = load_file.gets().to_s()
+    is_rest = convert_string_to_boolean(load_file.gets())
+    new_note = Note.new(x_pos, y_pos, sharp, flat, note_type, note, is_rest)
+    NOTES << new_note
+  end
+end
+
+def convert_string_to_boolean(string)
+  string == "true"
+end
+
 class MusicNotesMain < Gosu::Window
 
 	def initialize
@@ -476,9 +535,11 @@ class MusicNotesMain < Gosu::Window
     Gosu.draw_quad(1440, 65, WHITE, 1550, 65, WHITE, 1550, 105, WHITE, 1440, 105, WHITE, ZOrder::UI)
     FONT.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     FONT.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text("MusicNotes: A simple music notation software.", 50, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text("Made by Donovan Quilty", 1200, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("MusicNotes: A simple music notation software.", 10, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("Made by Donovan Quilty", 1300, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     FONT.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text(BUTTONS["Saved"], 700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   end
 
   #draw the blank sheet music
@@ -524,7 +585,6 @@ class MusicNotesMain < Gosu::Window
     end
   end
 
-  
   def draw_sharp_or_flat_selection
     if BUTTONS["Sharp Selected"]
       draw_box(NOTES_UI_START + 296)
