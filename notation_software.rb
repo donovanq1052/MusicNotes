@@ -464,7 +464,6 @@ def save_sheet_music()
     save_file.puts(note.sharp)
     save_file.puts(note.flat)
     save_file.puts(note.note_type)
-    save_file.puts(note.note)
     save_file.puts(note.is_rest)
   end
   Thread.new do
@@ -484,13 +483,15 @@ def load_sheet_music()
   while counter < index
     x_pos = load_file.gets.to_i()
     y_pos = load_file.gets.to_i()
-    sharp = convert_string_to_boolean(load_file.gets())
-    flat = convert_string_to_boolean(load_file.gets())
+    sharp = convert_string_to_boolean(load_file.gets.chomp())
+    flat = convert_string_to_boolean(load_file.gets.chomp())
     note_type = load_file.gets.to_i()
-    note = load_file.gets().to_s()
-    is_rest = convert_string_to_boolean(load_file.gets())
-    new_note = Note.new(x_pos, y_pos, sharp, flat, note_type, note, is_rest)
+    note_value_index = return_note_y(y_pos)
+    note = assign_note_sound(note_value_index[1])
+    is_rest = convert_string_to_boolean(load_file.gets.chomp())
+    new_note = Note.new(x_pos, note_value_index[0], sharp, flat, note_type, note, is_rest)
     NOTES << new_note
+    counter += 1
   end
 end
 
