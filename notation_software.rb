@@ -1,5 +1,7 @@
 require 'rubygems'
 require 'gosu'
+require './circle'
+require './note'
 
 module ZOrder
   BACKGROUND, UI, SHEET, NOTE = *0..3
@@ -22,6 +24,8 @@ SIXTEENTH_REST = Gosu::Image.new("images/sixteenthrest.png")
 REPEAT_SYMBOL = Gosu::Image.new("images/repeat.png")
 TREBLECLEF = Gosu::Image.new("images/trebleclef.png")
 FONT = Gosu::Font.new(30)
+CIRCLE = Gosu::Image.new(Circle.new(10))
+NOTE_ARRAY = ["Db5", "C5", "B4", "Bb4", "A4", "Ab4", "G4", "Gb4", "F4", "E4", "Eb4", "D4", "Db4", "C4", "B3", "Bb3", "A3", "Ab3", "G3", "Gb3", "F3", "E3", "Eb3", "D3", "Db3", "C3", "B2", "Bb2", "A2", "Ab2", "G2", "Gb2", "F2", "E2", "Eb2", "D2", "Db2"]
 BUTTONS = {
 "Note Type Selected" => NoteType::QUARTER,
 "Sharp Selected" => false, "Flat Selected" => false,
@@ -31,61 +35,13 @@ BUTTONS = {
 "Saved" => "Save"
 }
 NOTES = []
-
-######################### THIS SHOULD BE IN MUSIC_NOTES.RB BUT IT WON'T WORK TO USE IT FROM THERE ##############
-#THIS IS TO FIX LATER - TALK TO DR MITCHELL OR SOMETHING
-
-#Draw a circle - pinched from 6.3C in ed lessons
-class Circle
-  attr_reader :columns, :rows
-
-  def initialize(radius)
-    @columns = @rows = radius * 2
-
-    clear, solid = 0x00.chr, 0xff.chr
-
-    lower_half = (0...radius).map do |y|
-      x = Math.sqrt(radius ** 2 - y ** 2).round
-      right_half = "#{solid * x}#{clear * (radius - x)}"
-      right_half.reverse + right_half
-    end.join
-    alpha_channel = lower_half.reverse + lower_half
-    # Expand alpha bytes into RGBA color values.
-    @blob = alpha_channel.gsub(/./) { |alpha| solid * 3 + alpha }
-  end
-
-  def to_blob
-    @blob
-  end
-end
-
-# initialize one circle to be used in draw_note
-CIRCLE = Gosu::Image.new(Circle.new(10))
-
-#Create a class Note that has its location and note values
-class Note
-  attr_accessor :x_pos, :y_pos, :sharp, :flat, :note_type, :note, :sound, :is_rest
-  
-  def initialize(x_pos, y_pos, sharp, flat, note_type, note, is_rest)
-    @x_pos = x_pos
-    @y_pos = y_pos
-    @sharp = sharp
-    @flat = flat
-    @note_type = note_type
-    @note = note
-    @is_rest = is_rest
-    if !@is_rest
-      @sound = Gosu::Sample.new("pianonotes/#{note}.mp3")
-    else
-      @sound = nil
-    end
-  end
-end
-
 # create notes to be drawn in the UI menu
 UI_QUARTER = Note.new(NOTES_UI_START, 100, false, false, NoteType::QUARTER, "C5", false)
 UI_EIGTH = Note.new(NOTES_UI_START + 100, 100, false, false, NoteType::EIGTH, "C5", false)
 UI_SIXTEENTH = Note.new(NOTES_UI_START + 200, 100, false, false, NoteType::SIXTEENTH, "C5", false)
+
+
+########## DRAWING A NOTE ##########
 
 # draws a vertical line up
 def draw_up_line(x_pos, y_pos)
@@ -204,8 +160,9 @@ def draw_note(note)
     end
   end
 end
+######## DRAWING A NOTE #########
 
-######################### END OF MUSIC_NOTES.RB CODE ######################
+####### DRAWING UI COMPONENTS #########
 
 # draw a box around the currently selected ui item(s)
 def draw_box(top_x)
@@ -222,8 +179,11 @@ def draw_pointer()
   end
 end
 
-##### MOUSE LEFT SELECTOR FUNCTIONS AREA #####
+######## DRAWING UI COMPONENTS ###########
 
+##### BUTTON PRESS FUNCTIONS AREA #####
+
+# calls a function with mouse_x based on the position of mouse_y
 def main_selector(mouse_x, mouse_y)
   if mouse_y < 125
     if mouse_y > 35
@@ -236,6 +196,7 @@ def main_selector(mouse_x, mouse_y)
   end
 end
 
+# either toggles a boolean in BUTTONS or calls a function based on where mouse_x currently is
 def top_ui_actions(mouse_x)
   case mouse_x
   when 25..100
@@ -299,6 +260,7 @@ def bpm_scroll(direction)
   end
 end
 
+# plays all notes on the screen in order
 def play_sheet_music
   if NOTES.length > 0
     BUTTONS["Sheet Music Playing"] = true
@@ -334,10 +296,12 @@ def play_sheet_music
   end
 end
 
+# stops the sheet music from being played
 def stop_sheet_music
   BUTTONS["Sheet Music Playing"] = false
 end
 
+# toggles whether the sheet music should be paused
 def pause_sheet_music
   if BUTTONS["Sheet Music Playing"]
     if BUTTONS["Sheet Music Paused"]
@@ -348,6 +312,7 @@ def pause_sheet_music
   end
 end
 
+# toggles whether the sheet music should be repeated
 def repeat_sheet_music
   if !BUTTONS["Repeat"]
     BUTTONS["Repeat"] = true
@@ -356,6 +321,7 @@ def repeat_sheet_music
   end
 end
 
+# indicates the current note type selected
 def select_note(note_number)
   BUTTONS["Note Type Selected"] = note_number
 end
@@ -369,7 +335,7 @@ def create_note(mouse_x, mouse_y)
     elsif BUTTONS["Flat Selected"]
       note_value_index[1] += 1
     end
-    note = Note.new(note_x, note_value_index[0], BUTTONS["Sharp Selected"], BUTTONS["Flat Selected"], BUTTONS["Note Type Selected"], assign_note_sound(note_value_index[1]), BUTTONS["Rest Selected"])
+    note = Note.new(note_x, note_value_index[0], BUTTONS["Sharp Selected"], BUTTONS["Flat Selected"], BUTTONS["Note Type Selected"], NOTE_ARRAY[note_value_index[1]], BUTTONS["Rest Selected"])
     if !note.is_rest
       note.sound.play
     end
@@ -395,6 +361,7 @@ def create_note(mouse_x, mouse_y)
   end
 end
 
+# removes a note from the stave
 def remove_note(mouse_x, mouse_y)
   x_pos = return_note_x(mouse_x)
   y_pos = return_note_y(mouse_y)
@@ -439,12 +406,7 @@ def return_note_y(mouse_y)
   return [index - 9, value]
 end
 
-# takes note value and assigns it a string for the sample to be read using
-def assign_note_sound(note_value)
-  note_array = ["Db5", "C5", "B4", "Bb4", "A4", "Ab4", "G4", "Gb4", "F4", "E4", "Eb4", "D4", "Db4", "C4", "B3", "Bb3", "A3", "Ab3", "G3", "Gb3", "F3", "E3", "Eb3", "D3", "Db3", "C3", "B2", "Bb2", "A2", "Ab2", "G2", "Gb2", "F2", "E2", "Eb2", "D2", "Db2"]
-  return note_array[note_value]
-end
-
+# should we save or load the sheet music?
 def bottom_ui_actions(x_pos)
   case x_pos
   when 700..775
@@ -473,6 +435,7 @@ def save_sheet_music()
   end
 end
 
+# loads the notes in the savefile onto the screen
 def load_sheet_music()
   load_file = File.new("savefile.txt", "r")
   index = load_file.gets.to_i()
@@ -487,7 +450,7 @@ def load_sheet_music()
     flat = convert_string_to_boolean(load_file.gets.chomp())
     note_type = load_file.gets.to_i()
     note_value_index = return_note_y(y_pos)
-    note = assign_note_sound(note_value_index[1])
+    note = NOTE_ARRAY[note_value_index[1]]
     is_rest = convert_string_to_boolean(load_file.gets.chomp())
     new_note = Note.new(x_pos, note_value_index[0], sharp, flat, note_type, note, is_rest)
     NOTES << new_note
@@ -495,6 +458,7 @@ def load_sheet_music()
   end
 end
 
+#evaluates whether a given string == "true", returns true if it is, or false if it isn't. Used to load sheet music
 def convert_string_to_boolean(string)
   string == "true"
 end
@@ -586,6 +550,7 @@ class MusicNotesMain < Gosu::Window
     end
   end
 
+  # draw a box around the sharp or flat UI symbols based on what is selected
   def draw_sharp_or_flat_selection
     if BUTTONS["Sharp Selected"]
       draw_box(NOTES_UI_START + 296)
@@ -597,8 +562,6 @@ class MusicNotesMain < Gosu::Window
   def update
         
   end
-
-
 
   def draw
     draw_background()

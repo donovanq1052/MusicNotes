@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'gosu'
-require './notation_software'
 
 #Draw a circle - pinched from 6.3C in ed lessons
 class Circle
@@ -26,20 +25,3 @@ class Circle
   end
 end
 
-class NoteToDraw
-  attr_accessor :x_pos, :y_pos, :sharp, :flat, :note
-  
-  def initialize(x_pos, y_pos, sharp, flat, note)
-    @x_pos = x_pos
-    @y_pos = y_pos
-    @sharp = sharp
-    @flat = flat
-    @note = note
-  end
-end
-
-def draw_quarter_note(x_pos, y_pos, sharp, flat, note)
-  note = NoteToDraw.new(x_pos, y_pos, sharp, flat, note)
-  circle = Gosu::Image.new(Circle.new(50))
-  circle.draw(x_pos, y_pos, ZOrder::NOTE, 1.0, 1.0, Gosu::Color::BLACK)
-end
