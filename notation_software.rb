@@ -119,6 +119,17 @@ def draw_note(note)
   #end
   # draws lines below the stave based on the note position if the note is not a rest
   if !note.is_rest
+    for previous_note in NOTES
+      if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos
+        if note.y_pos <= 416
+          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
+          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 41, BLACK, note.x_pos + 20, note.y_pos - 41, BLACK, ZOrder::NOTE)
+        elsif note.y_pos > 416
+          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 48, BLACK, note.x_pos, note.y_pos + 48, BLACK, ZOrder::NOTE)
+          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 49, BLACK, note.x_pos, note.y_pos + 49, BLACK, ZOrder::NOTE)
+        end
+      end
+    end
     case note.y_pos
     when 191
       draw_sheet_line(note.x_pos, note.y_pos)
