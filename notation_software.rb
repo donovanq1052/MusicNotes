@@ -68,6 +68,9 @@ def draw_sheet_line(x_pos, y_pos)
   Gosu.draw_line(x_pos - 10, y_pos + 10, BLACK, x_pos + 30, y_pos + 10, BLACK, ZOrder::NOTE)
 end
 
+# takes a note, and boolean previous_note_found from draw_connecting_note_line
+# draws different parts of the note (line going up, lines going sideways)
+# based on type of note and notes in front of or behind it
 def draw_parts_of_note(note, previous_note_found)
   if note.y_pos <= 416
     draw_up_line(note.x_pos, note.y_pos)
@@ -83,7 +86,7 @@ def draw_parts_of_note(note, previous_note_found)
       end
     end
   elsif note.y_pos > 416
-    draw_down_line(note.x_pos, note.y_pos)
+    draw_down_line(note.x_pos - 18, note.y_pos)
     note_in_front = false
     for note_ahead in NOTES
       if note.x_pos + 80 == note_ahead.x_pos and note.note_type == note_ahead.note_type and note.y_pos == note_ahead.y_pos and !note_ahead.is_rest
@@ -142,103 +145,8 @@ end
 def draw_note(note)
   if !note.is_rest
     CIRCLE.draw(note.x_pos, note.y_pos, ZOrder::NOTE, 1.0, 1.0, BLACK)
-  end
-  case note.note_type
-  when NoteType::QUARTER
-    if note.is_rest
-      QUARTER_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
-    else
-      # draws a number of connecting lines depending on the note type
-      #if there's a note of the same type on the same y position in front of the note being drawn
-      previous_note_found = false
-      for previous_note in NOTES
-        if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos and !previous_note.is_rest
-          previous_note_found = true
-          if note.y_pos <= 416
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 39, BLACK, note.x_pos + 20, note.y_pos - 39, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
-          elsif note.y_pos > 416
-            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 48, BLACK, note.x_pos, note.y_pos + 48, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 49, BLACK, note.x_pos, note.y_pos + 49, BLACK, ZOrder::NOTE)
-          end
-        end
-      end
-      if note.y_pos <= 416
-        draw_up_line(note.x_pos, note.y_pos)
-      elsif note.y_pos > 416
-        draw_down_line(note.x_pos - 18, note.y_pos)
-      end
-    end
-  when NoteType::EIGTH
-    if note.is_rest
-      EIGTH_REST.draw(note.x_pos, 370, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
-    else
-      # draws a number of connecting lines depending on the note type
-      #if there's a note of the same type on the same y position in front of the note being drawn
-      previous_note_found = false
-      for previous_note in NOTES
-        if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos and !previous_note.is_rest
-          previous_note_found = true
-          if note.y_pos <= 416
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 39, BLACK, note.x_pos + 20, note.y_pos - 39, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 29, BLACK, note.x_pos + 20, note.y_pos - 29, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 30, BLACK, note.x_pos + 20, note.y_pos - 30, BLACK, ZOrder::NOTE)
-          elsif note.y_pos > 416
-            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 48, BLACK, note.x_pos, note.y_pos + 48, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 49, BLACK, note.x_pos, note.y_pos + 49, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 38, BLACK, note.x_pos, note.y_pos + 38, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 39, BLACK, note.x_pos, note.y_pos + 39, BLACK, ZOrder::NOTE)
-          end
-        end
-      end
-      # what parts of the note should be drawn depending on criteria
-      if note.y_pos <= 416
-        draw_up_line(note.x_pos, note.y_pos)
-        if !previous_note_found
-          draw_side_line(note.x_pos, note.y_pos - 40)
-        end
-      elsif note.y_pos > 416
-        draw_down_line(note.x_pos - 18, note.y_pos)
-        note_in_front = false
-        for note_ahead in NOTES
-          if note.x_pos + 80 == note_ahead.x_pos and note.note_type == note_ahead.note_type and note.y_pos == note_ahead.y_pos and !note_ahead.is_rest
-            note_in_front = true
-          end
-        end
-        if !note_in_front and !previous_note_found
-          draw_side_line(note.x_pos - 34, note.y_pos + 50)
-        end
-      end
-    end
-  when NoteType::SIXTEENTH
-    if note.is_rest
-      SIXTEENTH_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
-    else
-      # draws a number of connecting lines depending on the note type
-      # if there's a note of the same type on the same y position in front of the note being drawn
-      previous_note_found = false
-      for previous_note in NOTES
-        if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos and !previous_note.is_rest
-          previous_note_found = true
-          if note.y_pos <= 416
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 39, BLACK, note.x_pos + 20, note.y_pos - 39, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 29, BLACK, note.x_pos + 20, note.y_pos - 29, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 30, BLACK, note.x_pos + 20, note.y_pos - 30, BLACK, ZOrder::NOTE)
-            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 19, BLACK, note.x_pos + 20, note.y_pos - 20, BLACK, ZOrder::NOTE)
-
-    elsif note.y_pos <= 416
-      draw_up_line(note.x_pos, note.y_pos)
-      draw_side_line(note.x_pos, (note.y_pos - 40))
-      draw_side_line(note.x_pos, (note.y_pos - 30))
-    elsif note.y_pos > 416
-      draw_down_line(note.x_pos - 18, note.y_pos)
-      draw_side_line(note.x_pos - 34, note.y_pos + 50)
-      draw_side_line(note.x_pos - 34, note.y_pos + 40)
-    end
-  end
-  if !note.is_rest
+    draw_connecting_note_line(note)
+    # draws lines above or below the stave depending on the note position
     case note.y_pos
     when 191
       draw_sheet_line(note.x_pos, note.y_pos)
@@ -277,6 +185,16 @@ def draw_note(note)
     end
     if note.flat
       FLAT.draw(note.x_pos - 20, note.y_pos - 10, ZOrder::NOTE, scale_x = 0.008, scale_y = 0.008)
+    end
+  else
+    # if it's a rest we just draw an image of the rest
+    case note.note_type
+    when NoteType::QUARTER
+      QUARTER_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
+    when NoteType::EIGTH
+      EIGTH_REST.draw(note.x_pos, 370, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
+    when NoteType::SIXTEENTH
+      SIXTEENTH_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
     end
   end
 end
@@ -360,7 +278,6 @@ def top_ui_actions(mouse_x)
   when 1200..1300
     repeat_sheet_music()
   end
-
 end
 
 # control the bpm of the piece with the scroll wheel, between 10 and 300
@@ -382,35 +299,40 @@ end
 
 # plays all notes on the screen in order
 def play_sheet_music
-  if NOTES.length > 0
-    BUTTONS["Sheet Music Playing"] = true
-    BUTTONS["Pointer Position"] = 200
-    last_note_type = NoteType::QUARTER
-    a_note_found = false
-    Thread.new do      
-      while BUTTONS["Pointer Position"] <= 1600 and BUTTONS["Sheet Music Playing"]
-        for notes in NOTES
-          if notes.x_pos == BUTTONS["Pointer Position"]
-            a_note_found = true
-            if !notes.is_rest
-              notes.sound.play
+  if !BUTTONS["Sheet Music Playing"]
+    if NOTES.length > 0
+      BUTTONS["Sheet Music Playing"] = true
+      BUTTONS["Pointer Position"] = 200
+      last_note_type = NoteType::QUARTER
+      a_note_found = false
+      Thread.new do      
+        while BUTTONS["Pointer Position"] <= 1600 and BUTTONS["Sheet Music Playing"]
+          for notes in NOTES
+            if notes.x_pos == BUTTONS["Pointer Position"]
+              a_note_found = true
+              if !notes.is_rest
+                notes.sound.play
+              end
+              last_note_type = notes.note_type
+              if notes.note_type == NoteType::SIXTEENTH
+                last_note_type += 1
+              end
             end
-            last_note_type = notes.note_type
           end
-        end
-        time_to_wait = (SECONDS / BUTTONS["BPM"]) / last_note_type
-        if a_note_found
-          sleep time_to_wait
-          while BUTTONS["Sheet Music Paused"]
-            sleep 0.3
+          time_to_wait = (SECONDS / BUTTONS["BPM"]) / last_note_type
+          if a_note_found
+            sleep time_to_wait
+            while BUTTONS["Sheet Music Paused"]
+              sleep 0.3
+            end
           end
+          BUTTONS["Pointer Position"] += 80
+          a_note_found = false
         end
-        BUTTONS["Pointer Position"] += 80
-        a_note_found = false
-      end
-      if BUTTONS["Repeat"] and BUTTONS["Sheet Music Playing"] and !BUTTONS["Sheet Music Paused"]
-        BUTTONS["Pointer Position"] = 200
-        play_sheet_music()
+        if BUTTONS["Repeat"] and BUTTONS["Sheet Music Playing"] and !BUTTONS["Sheet Music Paused"]
+          BUTTONS["Pointer Position"] = 200
+          play_sheet_music()
+        end
       end
     end
   end
@@ -456,9 +378,19 @@ def create_note(mouse_x, mouse_y)
       note_value_index[1] += 1
     end
     note = Note.new(note_x, note_value_index[0], BUTTONS["Sharp Selected"], BUTTONS["Flat Selected"], BUTTONS["Note Type Selected"], NOTE_ARRAY[note_value_index[1]], BUTTONS["Rest Selected"])
-    if !note.is_rest
-      note.sound.play
-    end
+    #note.x_pos = note_x
+    #note.y_pos = note_value_index[0]
+    #note.sharp = BUTTONS["Sharp Selected"]
+    #note.flat = BUTTONS["Flat Selected"]
+    #note.note_type = BUTTONS["Note Type Selected"]
+    #note.note = NOTE_ARRAY[note_value_index[1]]
+    #note.is_rest = BUTTONS["Rest Selected"]
+    #if !note.is_rest
+      #note.sound = Gosu::Sample.new("pianonotes/#{note.note}.mp3")
+      #note.sound.play
+    #else
+      #note.sound = nil
+    #end
     for notes in NOTES
       if notes.x_pos == note.x_pos
         notes.note_type = note.note_type
@@ -526,13 +458,15 @@ def return_note_y(mouse_y)
   return [index - 9, value]
 end
 
-# should we save or load the sheet music?
+# should we save or load the sheet music? or clear the screen?
 def bottom_ui_actions(x_pos)
   case x_pos
   when 700..775
     save_sheet_music()
   when 900..975
     load_sheet_music()
+  when 1100..1175
+    clear_sheet_music()
   end
 end
 
@@ -583,6 +517,16 @@ def convert_string_to_boolean(string)
   string == "true"
 end
 
+def clear_sheet_music()
+  # for some reason again doing this once does not delete every note in NOTES
+  # so I have wrapped it in a while loop
+  while NOTES.length > 0
+    for note in NOTES
+     NOTES.delete(note)
+    end
+  end
+end
+
 class MusicNotesMain < Gosu::Window
 
 	def initialize
@@ -625,6 +569,7 @@ class MusicNotesMain < Gosu::Window
     FONT.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     FONT.draw_text(BUTTONS["Saved"], 700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
     FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+    FONT.draw_text("Clear", 1100, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   end
 
   #draw the blank sheet music
