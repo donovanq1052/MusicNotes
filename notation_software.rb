@@ -1,7 +1,11 @@
 require 'rubygems'
 require 'gosu'
 require './circle'
-require './note'
+
+# a record Note that stores the values of a single note
+class Note
+  attr_accessor :x_pos, :y_pos, :sharp, :flat, :note_type, :note, :sound, :is_rest
+end
 
 module ZOrder
   BACKGROUND, UI, SHEET, NOTE = *0..3
@@ -35,11 +39,21 @@ BUTTONS = {
 "Saved" => "Save"
 }
 NOTES = []
-# create notes to be drawn in the UI menu
-UI_QUARTER = Note.new(NOTES_UI_START, 100, false, false, NoteType::QUARTER, "C5", false)
-UI_EIGTH = Note.new(NOTES_UI_START + 100, 100, false, false, NoteType::EIGTH, "C5", false)
-UI_SIXTEENTH = Note.new(NOTES_UI_START + 200, 100, false, false, NoteType::SIXTEENTH, "C5", false)
+###### create notes to be drawn in the UI menu \/ #########
+UI_QUARTER = Note.new()
+UI_EIGTH = Note.new()
+UI_SIXTEENTH = Note.new()
 
+def setup_ui_notes(note, offset, note_type)
+  note.x_pos = NOTES_UI_START + offset
+  note.y_pos = 100
+  note.note_type = note_type
+end
+
+setup_ui_notes(UI_QUARTER, 0, NoteType::QUARTER)
+setup_ui_notes(UI_EIGTH, 100, NoteType::EIGTH)
+setup_ui_notes(UI_SIXTEENTH, 200, NoteType::SIXTEENTH)
+######## create notes to be drawn in the UI menu /\ #######
 
 ########## DRAWING A NOTE ##########
 
@@ -377,20 +391,20 @@ def create_note(mouse_x, mouse_y)
     elsif BUTTONS["Flat Selected"]
       note_value_index[1] += 1
     end
-    note = Note.new(note_x, note_value_index[0], BUTTONS["Sharp Selected"], BUTTONS["Flat Selected"], BUTTONS["Note Type Selected"], NOTE_ARRAY[note_value_index[1]], BUTTONS["Rest Selected"])
-    #note.x_pos = note_x
-    #note.y_pos = note_value_index[0]
-    #note.sharp = BUTTONS["Sharp Selected"]
-    #note.flat = BUTTONS["Flat Selected"]
-    #note.note_type = BUTTONS["Note Type Selected"]
-    #note.note = NOTE_ARRAY[note_value_index[1]]
-    #note.is_rest = BUTTONS["Rest Selected"]
-    #if !note.is_rest
-      #note.sound = Gosu::Sample.new("pianonotes/#{note.note}.mp3")
-      #note.sound.play
-    #else
-      #note.sound = nil
-    #end
+    note = Note.new()
+    note.x_pos = note_x
+    note.y_pos = note_value_index[0]
+    note.sharp = BUTTONS["Sharp Selected"]
+    note.flat = BUTTONS["Flat Selected"]
+    note.note_type = BUTTONS["Note Type Selected"]
+    note.note = NOTE_ARRAY[note_value_index[1]]
+    note.is_rest = BUTTONS["Rest Selected"]
+    if !note.is_rest
+      note.sound = Gosu::Sample.new("pianonotes/#{note.note}.mp3")
+      note.sound.play
+    else
+      note.sound = nil
+    end
     for notes in NOTES
       if notes.x_pos == note.x_pos
         notes.note_type = note.note_type
