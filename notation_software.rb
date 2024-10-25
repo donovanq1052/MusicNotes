@@ -68,6 +68,76 @@ def draw_sheet_line(x_pos, y_pos)
   Gosu.draw_line(x_pos - 10, y_pos + 10, BLACK, x_pos + 30, y_pos + 10, BLACK, ZOrder::NOTE)
 end
 
+def draw_parts_of_note(note, previous_note_found)
+  if note.y_pos <= 416
+    draw_up_line(note.x_pos, note.y_pos)
+    case note.note_type
+    when NoteType::EIGTH
+      if !previous_note_found
+        draw_side_line(note.x_pos, note.y_pos - 40)
+      end
+    when NoteType::SIXTEENTH
+      if !previous_note_found
+        draw_side_line(note.x_pos, note.y_pos - 40)
+        draw_side_line(note.x_pos, note.y_pos - 30)
+      end
+    end
+  elsif note.y_pos > 416
+    draw_down_line(note.x_pos, note.y_pos)
+    note_in_front = false
+    for note_ahead in NOTES
+      if note.x_pos + 80 == note_ahead.x_pos and note.note_type == note_ahead.note_type and note.y_pos == note_ahead.y_pos and !note_ahead.is_rest
+        note_in_front = true
+      end
+    end
+    if !note_in_front and !previous_note_found
+      case note.note_type
+      when NoteType::EIGTH
+        draw_side_line(note.x_pos - 34, note.y_pos + 50)
+      when NoteType::SIXTEENTH
+        draw_side_line(note.x_pos - 34, note.y_pos + 50)
+        draw_side_line(note.x_pos - 34, note.y_pos + 40)
+      end
+    end
+  end 
+end
+
+# draws a number of connecting lines depending on the note type
+# if there's a note of the same type on the same y position in front of the note being drawn
+# also calls to draw the connecting parts of the note
+def draw_connecting_note_line(note)
+  previous_note_found = false
+  for previous_note in NOTES
+    if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos and !previous_note.is_rest
+      previous_note_found = true
+      if note.y_pos <= 416
+        Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 39, BLACK, note.x_pos + 20, note.y_pos - 39, BLACK, ZOrder::NOTE)
+        Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
+        if note.note_type != NoteType::QUARTER
+          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 29, BLACK, note.x_pos + 20, note.y_pos - 29, BLACK, ZOrder::NOTE)
+          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 30, BLACK, note.x_pos + 20, note.y_pos - 30, BLACK, ZOrder::NOTE)
+        end
+        if note.note_type == NoteType::SIXTEENTH
+          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 19, BLACK, note.x_pos + 20, note.y_pos - 19, BLACK, ZOrder::NOTE)
+          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 20, BLACK, note.x_pos + 20, note.y_pos - 20, BLACK, ZOrder::NOTE)
+        end
+      elsif note.y_pos > 416
+        Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 48, BLACK, note.x_pos, note.y_pos + 48, BLACK, ZOrder::NOTE)
+        Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 49, BLACK, note.x_pos, note.y_pos + 49, BLACK, ZOrder::NOTE)
+        if note.note_type != NoteType::QUARTER
+          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 38, BLACK, note.x_pos, note.y_pos + 38, BLACK, ZOrder::NOTE)
+          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 39, BLACK, note.x_pos, note.y_pos + 39, BLACK, ZOrder::NOTE)
+        end
+        if note.note_type == NoteType::SIXTEENTH
+          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 28, BLACK, note.x_pos, note.y_pos + 28, BLACK, ZOrder::NOTE)
+          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 29, BLACK, note.x_pos, note.y_pos + 29, BLACK, ZOrder::NOTE)
+        end
+      end
+    end
+  end
+  draw_parts_of_note(note, previous_note_found)
+end
+
 # Takes a Note to draw and draws it at it's position
 def draw_note(note)
   if !note.is_rest
@@ -77,24 +147,87 @@ def draw_note(note)
   when NoteType::QUARTER
     if note.is_rest
       QUARTER_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
-    elsif note.y_pos <= 416
-      draw_up_line(note.x_pos, note.y_pos)
-    elsif note.y_pos > 416
-      draw_down_line(note.x_pos - 18, note.y_pos)
+    else
+      # draws a number of connecting lines depending on the note type
+      #if there's a note of the same type on the same y position in front of the note being drawn
+      previous_note_found = false
+      for previous_note in NOTES
+        if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos and !previous_note.is_rest
+          previous_note_found = true
+          if note.y_pos <= 416
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 39, BLACK, note.x_pos + 20, note.y_pos - 39, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
+          elsif note.y_pos > 416
+            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 48, BLACK, note.x_pos, note.y_pos + 48, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 49, BLACK, note.x_pos, note.y_pos + 49, BLACK, ZOrder::NOTE)
+          end
+        end
+      end
+      if note.y_pos <= 416
+        draw_up_line(note.x_pos, note.y_pos)
+      elsif note.y_pos > 416
+        draw_down_line(note.x_pos - 18, note.y_pos)
+      end
     end
   when NoteType::EIGTH
     if note.is_rest
       EIGTH_REST.draw(note.x_pos, 370, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
-    elsif note.y_pos <= 416
-      draw_up_line(note.x_pos, note.y_pos)
-      draw_side_line(note.x_pos, note.y_pos - 40)
-    elsif note.y_pos > 416
-      draw_down_line(note.x_pos - 18, note.y_pos)
-      draw_side_line(note.x_pos - 34, note.y_pos + 50)
+    else
+      # draws a number of connecting lines depending on the note type
+      #if there's a note of the same type on the same y position in front of the note being drawn
+      previous_note_found = false
+      for previous_note in NOTES
+        if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos and !previous_note.is_rest
+          previous_note_found = true
+          if note.y_pos <= 416
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 39, BLACK, note.x_pos + 20, note.y_pos - 39, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 29, BLACK, note.x_pos + 20, note.y_pos - 29, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 30, BLACK, note.x_pos + 20, note.y_pos - 30, BLACK, ZOrder::NOTE)
+          elsif note.y_pos > 416
+            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 48, BLACK, note.x_pos, note.y_pos + 48, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 49, BLACK, note.x_pos, note.y_pos + 49, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 38, BLACK, note.x_pos, note.y_pos + 38, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 39, BLACK, note.x_pos, note.y_pos + 39, BLACK, ZOrder::NOTE)
+          end
+        end
+      end
+      # what parts of the note should be drawn depending on criteria
+      if note.y_pos <= 416
+        draw_up_line(note.x_pos, note.y_pos)
+        if !previous_note_found
+          draw_side_line(note.x_pos, note.y_pos - 40)
+        end
+      elsif note.y_pos > 416
+        draw_down_line(note.x_pos - 18, note.y_pos)
+        note_in_front = false
+        for note_ahead in NOTES
+          if note.x_pos + 80 == note_ahead.x_pos and note.note_type == note_ahead.note_type and note.y_pos == note_ahead.y_pos and !note_ahead.is_rest
+            note_in_front = true
+          end
+        end
+        if !note_in_front and !previous_note_found
+          draw_side_line(note.x_pos - 34, note.y_pos + 50)
+        end
+      end
     end
   when NoteType::SIXTEENTH
     if note.is_rest
       SIXTEENTH_REST.draw(note.x_pos, 400, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
+    else
+      # draws a number of connecting lines depending on the note type
+      # if there's a note of the same type on the same y position in front of the note being drawn
+      previous_note_found = false
+      for previous_note in NOTES
+        if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos and !previous_note.is_rest
+          previous_note_found = true
+          if note.y_pos <= 416
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 39, BLACK, note.x_pos + 20, note.y_pos - 39, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 29, BLACK, note.x_pos + 20, note.y_pos - 29, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 30, BLACK, note.x_pos + 20, note.y_pos - 30, BLACK, ZOrder::NOTE)
+            Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 19, BLACK, note.x_pos + 20, note.y_pos - 20, BLACK, ZOrder::NOTE)
+
     elsif note.y_pos <= 416
       draw_up_line(note.x_pos, note.y_pos)
       draw_side_line(note.x_pos, (note.y_pos - 40))
@@ -105,31 +238,7 @@ def draw_note(note)
       draw_side_line(note.x_pos - 34, note.y_pos + 40)
     end
   end
-  # DONT FORGET ABOUT THIS - PROTOTYPE TO LINK NOTES
- #if !note.is_rest
-   # for other_notes in NOTES
-     # if note.x_pos - 80 == other_notes.x_pos
-       # if note.y_pos == other_notes.y_pos
-         # if note.note_type == other_notes.note_type
-          # Gosu.draw_line(other_notes.x_pos, other_notes.y_pos - 40, BLACK, note.x_pos, note.y_pos - 40, BLACK, ZOrder::NOTE)
-         # end
-       # end
-     # end
-   # end
-  #end
-  # draws lines below the stave based on the note position if the note is not a rest
   if !note.is_rest
-    for previous_note in NOTES
-      if note.x_pos - 80 == previous_note.x_pos and note.note_type == previous_note.note_type and note.y_pos == previous_note.y_pos
-        if note.y_pos <= 416
-          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 40, BLACK, note.x_pos + 20, note.y_pos - 40, BLACK, ZOrder::NOTE)
-          Gosu.draw_line(previous_note.x_pos + 18, previous_note.y_pos - 41, BLACK, note.x_pos + 20, note.y_pos - 41, BLACK, ZOrder::NOTE)
-        elsif note.y_pos > 416
-          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 48, BLACK, note.x_pos, note.y_pos + 48, BLACK, ZOrder::NOTE)
-          Gosu.draw_line(previous_note.x_pos, previous_note.y_pos + 49, BLACK, note.x_pos, note.y_pos + 49, BLACK, ZOrder::NOTE)
-        end
-      end
-    end
     case note.y_pos
     when 191
       draw_sheet_line(note.x_pos, note.y_pos)
