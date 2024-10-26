@@ -32,8 +32,6 @@ EIGTH_REST = Gosu::Image.new("images/eighthrest.png")
 SIXTEENTH_REST = Gosu::Image.new("images/sixteenthrest.png")
 REPEAT_SYMBOL = Gosu::Image.new("images/repeat.png")
 TREBLECLEF = Gosu::Image.new("images/trebleclef.png")
-LEFTARROW = Gosu::Image.new("images/arrowleft.png")
-RIGHTARROW = Gosu::Image.new("images/arrowright.png")
 FONT = Gosu::Font.new(30)
 CIRCLE = Gosu::Image.new(Circle.new(10))
 NOTE_ARRAY = ["Db5", "C5", "B4", "Bb4", "A4", "Ab4", "G4", "Gb4", "F4", "E4", "Eb4", "D4", "Db4", "C4", "B3", "Bb3", "A3", "Ab3", "G3", "Gb3", "F3", "E3", "Eb3", "D3", "Db3", "C3", "B2", "Bb2", "A2", "Ab2", "G2", "Gb2", "F2", "E2", "Eb2", "D2", "Db2"]
@@ -273,8 +271,6 @@ def draw_ui
   FONT.draw_text(BUTTONS["Saved"], 700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("Clear", 1100, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-  LEFTARROW.draw(50, 650, ZOrder::UI, scale_x = 0.1, scale_y = 0.1, BLACK)
-  RIGHTARROW.draw(1500, 650, ZOrder::UI, scale_x = 0.1, scale_y = 0.1, BLACK)
 end
 
 #draw the blank sheet music
@@ -290,11 +286,9 @@ def draw_sheet
     Gosu.draw_line(bar_x + 1, 300, BLACK, bar_x + 1, 500, BLACK, ZOrder::SHEET)
     bar_x += 320
   end
-  if @camera_x == 0
-    TREBLECLEF.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
-    #start of sheet music
-    Gosu.draw_quad(170, 300, BLACK, 175, 300, BLACK, 170, 500, BLACK, 175, 500, BLACK, ZOrder::SHEET)
-  end
+  TREBLECLEF.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
+  #start of sheet music
+  Gosu.draw_quad(170, 300, BLACK, 175, 300, BLACK, 170, 500, BLACK, 175, 500, BLACK, ZOrder::SHEET)
 end
 
 #draw a border around the note currently selected in the UI
@@ -343,13 +337,7 @@ end
 
 # calls a function with mouse_x based on the position of mouse_y
 def main_selector(mouse_x, mouse_y)
-  if mouse_y >= 650 and mouse_y < 680
-    #if mouse_x >= 50 and mouse_x < 80
-      #move_sheet_music(Direction::FORWARD)
-    #elsif mouse_x >= 1500 and mouse_x < 1530
-      #move_sheet_music(Direction::BACKWARD)
-    #end
-  elsif mouse_y < 125
+  if mouse_y < 125
     if mouse_y > 35
       top_ui_actions(mouse_x)
     end
@@ -369,13 +357,13 @@ def top_ui_actions(mouse_x)
     stop_sheet_music()
   when 260..340
     pause_sheet_music()
-  when 390..420
+  when 390..450
     select_note(NoteType::QUARTER)
     BUTTONS["Rest Selected"] = false
-  when 490..520
+  when 490..550
     select_note(NoteType::EIGTH)
     BUTTONS["Rest Selected"] = false
-  when 590..620
+  when 590..650
     select_note(NoteType::SIXTEENTH)
     BUTTONS["Rest Selected"] = false
   when 690..750
@@ -661,14 +649,6 @@ def clear_sheet_music()
   end
 end
 
-def move_sheet_music(direction)
-  if direction == Direction::FORWARD
-    @camera_x += 3200
-  elsif direction == Direction::BACKWARD and @camera_x >= 1500
-    @camera_x -= 1500
-  end
-end
-
 
 class MusicNotesMain < Gosu::Window
 
@@ -676,33 +656,21 @@ class MusicNotesMain < Gosu::Window
     #window size
     super WIDTH, HEIGHT
     self.caption = "MusicNotes"
-    @camera_x = 0
 	end
 
   def update
-    if Gosu.button_down? Gosu::MsLeft
-      if mouse_y >= 650 and mouse_y < 700
-        if mouse_x >= 50 and mouse_x < 130
-          move_sheet_music(Direction::FORWARD)
-        elsif mouse_x >= 1500 and mouse_x < 1580
-          move_sheet_music(Direction::BACKWARD)
-        end
-      end
-    end
   end
 
   def draw
-    Gosu.translate(@camera_x, 0) do 
-      draw_background()
-      draw_ui()
-      draw_sheet()
-      draw_selected()
-      draw_sharp_or_flat_selection()
-    end
+    draw_background()
+    draw_ui()
+    draw_sheet()
+    draw_selected()
+    draw_sharp_or_flat_selection()
+    draw_pointer()
     for note in NOTES
       draw_note(note)
     end
-    draw_pointer()
   end
 
   def needs_cursor?; true; end
