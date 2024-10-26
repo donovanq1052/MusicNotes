@@ -345,7 +345,10 @@ def play_sheet_music
         end
         if BUTTONS["Repeat"] and BUTTONS["Sheet Music Playing"] and !BUTTONS["Sheet Music Paused"]
           BUTTONS["Pointer Position"] = 200
+          BUTTONS["Sheet Music Playing"] = false
           play_sheet_music()
+        else
+          BUTTONS["Sheet Music Playing"] = false
         end
       end
     end
