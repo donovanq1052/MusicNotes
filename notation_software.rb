@@ -27,6 +27,8 @@ EIGTH_REST = Gosu::Image.new("images/eighthrest.png")
 SIXTEENTH_REST = Gosu::Image.new("images/sixteenthrest.png")
 REPEAT_SYMBOL = Gosu::Image.new("images/repeat.png")
 TREBLECLEF = Gosu::Image.new("images/trebleclef.png")
+LEFTARROW = Gosu::Image.new("images/arrowleft.png")
+RIGHTARROW = Gosu::Image.new("images/arrowright.png")
 FONT = Gosu::Font.new(30)
 CIRCLE = Gosu::Image.new(Circle.new(10))
 NOTE_ARRAY = ["Db5", "C5", "B4", "Bb4", "A4", "Ab4", "G4", "Gb4", "F4", "E4", "Eb4", "D4", "Db4", "C4", "B3", "Bb3", "A3", "Ab3", "G3", "Gb3", "F3", "E3", "Eb3", "D3", "Db3", "C3", "B2", "Bb2", "A2", "Ab2", "G2", "Gb2", "F2", "E2", "Eb2", "D2", "Db2"]
@@ -214,7 +216,7 @@ def draw_note(note)
 end
 ######## DRAWING A NOTE #########
 
-####### DRAWING UI COMPONENTS #########
+####### DRAWING BACKGROUND AND UI COMPONENTS #########
 
 # draw a box around the currently selected ui item(s)
 def draw_box(top_x)
@@ -231,7 +233,103 @@ def draw_pointer()
   end
 end
 
-######## DRAWING UI COMPONENTS ###########
+#draw the white background
+def draw_background
+  Gosu.draw_quad(0, 0, WHITE, 1600, 0, WHITE, 0, 800, WHITE, 1600, 800, WHITE, ZOrder::BACKGROUND, mode =:default)
+end
+
+#draw the ui components
+def draw_ui
+  #top and bottom panels
+  Gosu.draw_quad(0, 0, UI_COLOUR, 1600, 0, UI_COLOUR, 0, 150, UI_COLOUR, 1600, 150, UI_COLOUR, ZOrder::UI)
+  Gosu.draw_quad(0, 750, UI_COLOUR, 1600, 750, UI_COLOUR, 0, 800, UI_COLOUR, 1600, 800, UI_COLOUR, ZOrder::UI)
+  # play, stop, repeat and pause buttons
+  Gosu.draw_triangle(100, 80, BLACK, 25, 125, BLACK, 25, 40, BLACK, ZOrder::UI)
+  Gosu.draw_quad(150, 50, BLACK, 225, 50, BLACK, 225, 125, BLACK, 150, 125, BLACK, ZOrder::UI)
+  Gosu.draw_quad(275, 50, BLACK, 300, 50, BLACK, 300, 125, BLACK, 275, 125, BLACK, ZOrder::UI)
+  Gosu.draw_quad(315, 50, BLACK, 340, 50, BLACK, 340, 125, BLACK, 315, 125, BLACK, ZOrder::UI)
+  REPEAT_SYMBOL.draw(NOTES_UI_START + 800, 70, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
+  # note selection options
+  draw_note(UI_QUARTER)
+  draw_note(UI_EIGTH)
+  draw_note(UI_SIXTEENTH)
+  SHARP.draw(NOTES_UI_START + 300, 70, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
+  FLAT.draw(NOTES_UI_START + 400, 60, ZOrder::UI, scale_x = 0.015, scale_y = 0.015)
+  QUARTER_REST.draw(NOTES_UI_START + 500, 56, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
+  EIGTH_REST.draw(NOTES_UI_START + 600, 30, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
+  SIXTEENTH_REST.draw(NOTES_UI_START + 700, 50, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
+  #bpm, and bottom of screen fonts
+  Gosu.draw_quad(1440, 65, WHITE, 1550, 65, WHITE, 1550, 105, WHITE, 1440, 105, WHITE, ZOrder::UI)
+  FONT.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text("MusicNotes: A simple music notation software.", 10, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text("Made by Donovan Quilty", 1300, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text(BUTTONS["Saved"], 700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text("Clear", 1100, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  LEFTARROW.draw(50, 650, ZOrder::UI, scale_x = 0.1, scale_y = 0.1, BLACK)
+end
+
+#draw the blank sheet music
+def draw_sheet
+  line_y = 300
+  bar_x = 500
+  while line_y <= 500
+    Gosu.draw_line(0, line_y, BLACK, 1600, line_y, BLACK, ZOrder::SHEET)
+    line_y += 50
+  end
+  while bar_x < 1600
+    Gosu.draw_line(bar_x, 300, BLACK, bar_x, 500, BLACK, ZOrder::SHEET)
+    Gosu.draw_line(bar_x + 1, 300, BLACK, bar_x + 1, 500, BLACK, ZOrder::SHEET)
+    bar_x += 320
+  end
+  TREBLECLEF.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
+  #start of sheet music
+  Gosu.draw_quad(170, 300, BLACK, 175, 300, BLACK, 170, 500, BLACK, 175, 500, BLACK, ZOrder::SHEET)
+end
+
+#draw a border around the note currently selected in the UI
+def draw_selected
+  case BUTTONS["Note Type Selected"]
+  when NoteType::QUARTER
+    if BUTTONS["Rest Selected"]
+      draw_box(NOTES_UI_START + 492)
+    else
+      draw_box(NOTES_UI_START - 8)
+    end
+  when NoteType::EIGTH
+    if BUTTONS["Rest Selected"]
+      draw_box(NOTES_UI_START + 592)
+    else
+      draw_box(NOTES_UI_START + 92)
+    end
+  when NoteType::SIXTEENTH
+    if BUTTONS["Rest Selected"]
+      draw_box(NOTES_UI_START + 692)
+    else
+      draw_box(NOTES_UI_START + 192)
+    end
+  end
+  if BUTTONS["Repeat"]
+    Gosu.draw_line(1200, 125, BLACK, 1300, 125, BLACK, ZOrder::UI)
+  end
+  if BUTTONS["Sheet Music Paused"]
+    Gosu.draw_line(270, 130, BLACK, 345, 130, BLACK, ZOrder::UI)
+    Gosu.draw_line(270, 131, BLACK, 345, 131, BLACK, ZOrder::UI)
+  end
+end
+
+# draw a box around the sharp or flat UI symbols based on what is selected
+def draw_sharp_or_flat_selection
+  if BUTTONS["Sharp Selected"]
+    draw_box(NOTES_UI_START + 296)
+  elsif BUTTONS["Flat Selected"]
+    draw_box(NOTES_UI_START + 392)
+  end
+end
+
+######## DRAWING BACKGROUND AND UI COMPONENTS ###########
 
 ##### BUTTON PRESS FUNCTIONS AREA #####
 
@@ -515,16 +613,21 @@ def load_sheet_music()
     NOTES.delete(note)
   end
   while counter < index
-    x_pos = load_file.gets.to_i()
-    y_pos = load_file.gets.to_i()
-    sharp = convert_string_to_boolean(load_file.gets.chomp())
-    flat = convert_string_to_boolean(load_file.gets.chomp())
-    note_type = load_file.gets.to_i()
-    note_value_index = return_note_y(y_pos)
-    note = NOTE_ARRAY[note_value_index[1]]
-    is_rest = convert_string_to_boolean(load_file.gets.chomp())
-    new_note = Note.new(x_pos, note_value_index[0], sharp, flat, note_type, note, is_rest)
-    NOTES << new_note
+    note = Note.new()
+    note.x_pos = load_file.gets.to_i()
+    note.y_pos = load_file.gets.to_i()
+    note.sharp = convert_string_to_boolean(load_file.gets.chomp())
+    note.flat = convert_string_to_boolean(load_file.gets.chomp())
+    note.note_type = load_file.gets.to_i()
+    note_value_index = return_note_y(note.y_pos)
+    note.note = NOTE_ARRAY[note_value_index[1]]
+    note.is_rest = convert_string_to_boolean(load_file.gets.chomp())
+    if !note.is_rest
+      note.sound = Gosu::Sample.new("pianonotes/#{note.note}.mp3")
+    else
+      note.sound = nil
+    end
+    NOTES << note
     counter += 1
   end
 end
@@ -547,102 +650,15 @@ end
 class MusicNotesMain < Gosu::Window
 
 	def initialize
-      #window size
-	  	super 1600, 800
-	  	self.caption = "MusicNotes"
+    #window size
+    super 1600, 800
+    self.caption = "MusicNotes"
+    @camera_x = 0
+    @camera_y = 0
 	end
 
-  #draw the white background
-  def draw_background
-    Gosu.draw_quad(0, 0, WHITE, 1600, 0, WHITE, 0, 800, WHITE, 1600, 800, WHITE, ZOrder::BACKGROUND, mode =:default)
-  end
-
-  #draw the ui components
-  def draw_ui
-    #top and bottom panels
-    Gosu.draw_quad(0, 0, UI_COLOUR, 1600, 0, UI_COLOUR, 0, 150, UI_COLOUR, 1600, 150, UI_COLOUR, ZOrder::UI)
-    Gosu.draw_quad(0, 750, UI_COLOUR, 1600, 750, UI_COLOUR, 0, 800, UI_COLOUR, 1600, 800, UI_COLOUR, ZOrder::UI)
-    # play, stop, repeat and pause buttons
-    Gosu.draw_triangle(100, 80, BLACK, 25, 125, BLACK, 25, 40, BLACK, ZOrder::UI)
-    Gosu.draw_quad(150, 50, BLACK, 225, 50, BLACK, 225, 125, BLACK, 150, 125, BLACK, ZOrder::UI)
-    Gosu.draw_quad(275, 50, BLACK, 300, 50, BLACK, 300, 125, BLACK, 275, 125, BLACK, ZOrder::UI)
-    Gosu.draw_quad(315, 50, BLACK, 340, 50, BLACK, 340, 125, BLACK, 315, 125, BLACK, ZOrder::UI)
-    REPEAT_SYMBOL.draw(NOTES_UI_START + 800, 70, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
-    # note selection options
-    draw_note(UI_QUARTER)
-    draw_note(UI_EIGTH)
-    draw_note(UI_SIXTEENTH)
-    SHARP.draw(NOTES_UI_START + 300, 70, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
-    FLAT.draw(NOTES_UI_START + 400, 60, ZOrder::UI, scale_x = 0.015, scale_y = 0.015)
-    QUARTER_REST.draw(NOTES_UI_START + 500, 56, ZOrder::UI, scale_x = 0.1, scale_y = 0.1)
-    EIGTH_REST.draw(NOTES_UI_START + 600, 30, ZOrder::UI, scale_x = 0.03, scale_y = 0.03)
-    SIXTEENTH_REST.draw(NOTES_UI_START + 700, 50, ZOrder::UI, scale_x = 0.04, scale_y = 0.04)
-    #bpm, and bottom of screen fonts
-    Gosu.draw_quad(1440, 65, WHITE, 1550, 65, WHITE, 1550, 105, WHITE, 1440, 105, WHITE, ZOrder::UI)
-    FONT.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text("MusicNotes: A simple music notation software.", 10, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text("Made by Donovan Quilty", 1300, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text(BUTTONS["Saved"], 700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-    FONT.draw_text("Clear", 1100, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-  end
-
-  #draw the blank sheet music
-  def draw_sheet
-    Gosu.draw_line(0, 300, BLACK, 1600, 300, BLACK, ZOrder::SHEET)
-    Gosu.draw_line(0, 350, BLACK, 1600, 350, BLACK, ZOrder::SHEET)
-    Gosu.draw_line(0, 400, BLACK, 1600, 400, BLACK, ZOrder::SHEET)
-    Gosu.draw_line(0, 450, BLACK, 1600, 450, BLACK, ZOrder::SHEET)
-    Gosu.draw_line(0, 500, BLACK, 1600, 500, BLACK, ZOrder::SHEET)
-    TREBLECLEF.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
-    #start of sheet music
-    Gosu.draw_quad(170, 300, BLACK, 175, 300, BLACK, 170, 500, BLACK, 175, 500, BLACK, ZOrder::SHEET)
-  end
-
-  #draw a border around the note currently selected in the UI
-  def draw_selected
-    case BUTTONS["Note Type Selected"]
-    when NoteType::QUARTER
-      if BUTTONS["Rest Selected"]
-        draw_box(NOTES_UI_START + 492)
-      else
-        draw_box(NOTES_UI_START - 8)
-      end
-    when NoteType::EIGTH
-      if BUTTONS["Rest Selected"]
-        draw_box(NOTES_UI_START + 592)
-      else
-        draw_box(NOTES_UI_START + 92)
-      end
-    when NoteType::SIXTEENTH
-      if BUTTONS["Rest Selected"]
-        draw_box(NOTES_UI_START + 692)
-      else
-        draw_box(NOTES_UI_START + 192)
-      end
-    end
-    if BUTTONS["Repeat"]
-      Gosu.draw_line(1200, 125, BLACK, 1300, 125, BLACK, ZOrder::UI)
-    end
-    if BUTTONS["Sheet Music Paused"]
-      Gosu.draw_line(270, 130, BLACK, 345, 130, BLACK, ZOrder::UI)
-      Gosu.draw_line(270, 131, BLACK, 345, 131, BLACK, ZOrder::UI)
-    end
-  end
-
-  # draw a box around the sharp or flat UI symbols based on what is selected
-  def draw_sharp_or_flat_selection
-    if BUTTONS["Sharp Selected"]
-      draw_box(NOTES_UI_START + 296)
-    elsif BUTTONS["Flat Selected"]
-      draw_box(NOTES_UI_START + 392)
-    end
-  end
-
   def update
-        
+    
   end
 
   def draw
