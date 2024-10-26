@@ -11,10 +11,15 @@ module ZOrder
   BACKGROUND, UI, SHEET, NOTE = *0..3
 end
 
+module Direction
+  FORWARD, BACKWARD = true, false
+end
+
 module NoteType
   QUARTER, EIGTH, SIXTEENTH = *1..3
 end
 
+WIDTH, HEIGHT = 3000, 800
 UI_COLOUR = Gosu::Color.new(0xFF1EB1FA)
 BLACK = Gosu::Color::BLACK
 WHITE = Gosu::Color::WHITE
@@ -269,6 +274,7 @@ def draw_ui
   FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("Clear", 1100, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   LEFTARROW.draw(50, 650, ZOrder::UI, scale_x = 0.1, scale_y = 0.1, BLACK)
+  RIGHTARROW.draw(1500, 650, ZOrder::UI, scale_x = 0.1, scale_y = 0.1, BLACK)
 end
 
 #draw the blank sheet music
@@ -284,9 +290,11 @@ def draw_sheet
     Gosu.draw_line(bar_x + 1, 300, BLACK, bar_x + 1, 500, BLACK, ZOrder::SHEET)
     bar_x += 320
   end
-  TREBLECLEF.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
-  #start of sheet music
-  Gosu.draw_quad(170, 300, BLACK, 175, 300, BLACK, 170, 500, BLACK, 175, 500, BLACK, ZOrder::SHEET)
+  if @camera_x == 0
+    TREBLECLEF.draw(10, 250, ZOrder::SHEET, scale_x = 0.2, scale_y = 0.2)
+    #start of sheet music
+    Gosu.draw_quad(170, 300, BLACK, 175, 300, BLACK, 170, 500, BLACK, 175, 500, BLACK, ZOrder::SHEET)
+  end
 end
 
 #draw a border around the note currently selected in the UI
@@ -335,7 +343,13 @@ end
 
 # calls a function with mouse_x based on the position of mouse_y
 def main_selector(mouse_x, mouse_y)
-  if mouse_y < 125
+  if mouse_y >= 650 and mouse_y < 680
+    #if mouse_x >= 50 and mouse_x < 80
+      #move_sheet_music(Direction::FORWARD)
+    #elsif mouse_x >= 1500 and mouse_x < 1530
+      #move_sheet_music(Direction::BACKWARD)
+    #end
+  elsif mouse_y < 125
     if mouse_y > 35
       top_ui_actions(mouse_x)
     end
@@ -647,27 +661,47 @@ def clear_sheet_music()
   end
 end
 
+def move_sheet_music(direction)
+  if direction == Direction::FORWARD
+    @camera_x += 3200
+  elsif direction == Direction::BACKWARD and @camera_x >= 1500
+    @camera_x -= 1500
+  end
+end
+
+
 class MusicNotesMain < Gosu::Window
 
 	def initialize
     #window size
-    super 1600, 800
+    super WIDTH, HEIGHT
     self.caption = "MusicNotes"
+    @camera_x = 0
 	end
 
   def update
-    
+    if Gosu.button_down? Gosu::MsLeft
+      if mouse_y >= 650 and mouse_y < 700
+        if mouse_x >= 50 and mouse_x < 130
+          move_sheet_music(Direction::FORWARD)
+        elsif mouse_x >= 1500 and mouse_x < 1580
+          move_sheet_music(Direction::BACKWARD)
+        end
+      end
+    end
   end
 
   def draw
-    draw_background()
-    draw_ui()
-    draw_sheet()
+    Gosu.translate(@camera_x, 0) do 
+      draw_background()
+      draw_ui()
+      draw_sheet()
+      draw_selected()
+      draw_sharp_or_flat_selection()
+    end
     for note in NOTES
       draw_note(note)
     end
-    draw_selected()
-    draw_sharp_or_flat_selection()
     draw_pointer()
   end
 
