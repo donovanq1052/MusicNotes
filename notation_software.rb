@@ -535,8 +535,10 @@ def remove_note(mouse_x, mouse_y)
   x_pos = return_note_x(mouse_x)
   y_pos = return_note_y(mouse_y)
   for note in NOTES
-    if x_pos == note.x_pos and y_pos[0] == note.y_pos
-      NOTES.delete(note)
+    if x_pos == note.x_pos
+      if note.is_rest or y_pos[0] == note.y_pos
+        NOTES.delete(note)
+      end
     end
   end
 end
@@ -611,9 +613,7 @@ def load_sheet_music()
   load_file = File.new("savefile.txt", "r")
   index = load_file.gets.to_i()
   counter = 0
-  for note in NOTES
-    NOTES.delete(note)
-  end
+  clear_sheet_music()
   while counter < index
     note = Note.new()
     note.x_pos = load_file.gets.to_i()
@@ -622,6 +622,11 @@ def load_sheet_music()
     note.flat = convert_string_to_boolean(load_file.gets.chomp())
     note.note_type = load_file.gets.to_i()
     note_value_index = return_note_y(note.y_pos)
+    if note.sharp
+      note_value_index[1] -= 1
+    elsif note.flat
+      note_value_index[1] += 1
+    end
     note.note = NOTE_ARRAY[note_value_index[1]]
     note.is_rest = convert_string_to_boolean(load_file.gets.chomp())
     if !note.is_rest
