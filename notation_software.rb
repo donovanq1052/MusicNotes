@@ -653,8 +653,6 @@ class MusicNotesMain < Gosu::Window
     #window size
     super 1600, 800
     self.caption = "MusicNotes"
-    @camera_x = 0
-    @camera_y = 0
 	end
 
   def update
