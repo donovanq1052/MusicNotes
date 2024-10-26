@@ -19,7 +19,7 @@ module NoteType
   QUARTER, EIGTH, SIXTEENTH = *1..3
 end
 
-WIDTH, HEIGHT = 3000, 800
+WIDTH, HEIGHT = 1600, 800
 UI_COLOUR = Gosu::Color.new(0xFF1EB1FA)
 BLACK = Gosu::Color::BLACK
 WHITE = Gosu::Color::WHITE
