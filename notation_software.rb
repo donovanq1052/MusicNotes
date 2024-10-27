@@ -11,10 +11,6 @@ module ZOrder
   BACKGROUND, UI, SHEET, NOTE = *0..3
 end
 
-module Direction
-  FORWARD, BACKWARD = true, false
-end
-
 module NoteType
   QUARTER, EIGTH, SIXTEENTH = *1..3
 end
@@ -34,7 +30,9 @@ REPEAT_SYMBOL = Gosu::Image.new("images/repeat.png")
 TREBLECLEF = Gosu::Image.new("images/trebleclef.png")
 FONT = Gosu::Font.new(30)
 CIRCLE = Gosu::Image.new(Circle.new(10))
+# NOTE_ARRAY assigns a note value string so that the sound file can be opened correctly
 NOTE_ARRAY = ["Db5", "C5", "B4", "Bb4", "A4", "Ab4", "G4", "Gb4", "F4", "E4", "Eb4", "D4", "Db4", "C4", "B3", "Bb3", "A3", "Ab3", "G3", "Gb3", "F3", "E3", "Eb3", "D3", "Db3", "C3", "B2", "Bb2", "A2", "Ab2", "G2", "Gb2", "F2", "E2", "Eb2", "D2", "Db2"]
+# hashmap constant BUTTONS is used so the program knows when buttons are pressed.
 BUTTONS = {
 "Note Type Selected" => NoteType::QUARTER,
 "Sharp Selected" => false, "Flat Selected" => false,
@@ -229,8 +227,8 @@ def draw_box(top_x)
   Gosu.draw_line(top_x, 125, BLACK, top_x, 45, BLACK, ZOrder::UI)
 end
 
-# draw a pointer that shows the note the sheet music is currently playing
-def draw_pointer()
+# draw a pointer that shows the note(s) the sheet music is currently playing
+def draw_pointer
   if BUTTONS["Sheet Music Playing"]
     Gosu.draw_line(BUTTONS["Pointer Position"] + 10, 170, BLACK, BUTTONS["Pointer Position"] + 10, 700, BLACK, ZOrder::NOTE)
   end
@@ -292,7 +290,7 @@ def draw_sheet
 end
 
 #draw a border around the note currently selected in the UI
-def draw_selected
+def draw_selected_note
   case BUTTONS["Note Type Selected"]
   when NoteType::QUARTER
     if BUTTONS["Rest Selected"]
@@ -351,45 +349,45 @@ end
 # either toggles a boolean in BUTTONS or calls a function based on where mouse_x currently is
 def top_ui_actions(mouse_x)
   case mouse_x
-  when 25..100
+  when 25..100 # play button
     play_sheet_music()
-  when 150..225
+  when 150..225 # stop button
     stop_sheet_music()
-  when 260..340
+  when 260..340 # pause button
     pause_sheet_music()
-  when 390..450
+  when 390..450 # quarter note selected
     select_note(NoteType::QUARTER)
     BUTTONS["Rest Selected"] = false
-  when 490..550
+  when 490..550 # eigth note selected
     select_note(NoteType::EIGTH)
     BUTTONS["Rest Selected"] = false
-  when 590..650
+  when 590..650 # sixteenth note selected
     select_note(NoteType::SIXTEENTH)
     BUTTONS["Rest Selected"] = false
-  when 690..750
+  when 690..750 # sharp toggled
     if !BUTTONS["Sharp Selected"]
       BUTTONS["Sharp Selected"] = true
     elsif BUTTONS["Sharp Selected"]
       BUTTONS["Sharp Selected"] = false
     end
     BUTTONS["Flat Selected"] = false
-  when 790..830
+  when 790..830 # flat toggled
     if !BUTTONS["Flat Selected"]
       BUTTONS["Flat Selected"] = true
     elsif BUTTONS["Flat Selected"]
       BUTTONS["Flat Selected"] = false
     end
     BUTTONS["Sharp Selected"] = false
-  when 890..940
+  when 890..940 # quarter rest selected
     select_note(NoteType::QUARTER)
     BUTTONS["Rest Selected"] = true
-  when 990..1040
+  when 990..1040 # eigth rest selected
     select_note(NoteType::EIGTH)
     BUTTONS["Rest Selected"] = true
-  when 1090..1140
+  when 1090..1140 # sixteenth rest selected
     select_note(NoteType::SIXTEENTH)
     BUTTONS["Rest Selected"] = true
-  when 1200..1300
+  when 1200..1300 # repeat button
     repeat_sheet_music()
   end
 end
@@ -419,7 +417,7 @@ def play_sheet_music
       BUTTONS["Pointer Position"] = 200
       last_note_type = NoteType::QUARTER
       a_note_found = false
-      Thread.new do      
+      Thread.new do # allows other key presses to work while the program is sleeping     
         while BUTTONS["Pointer Position"] <= WIDTH and BUTTONS["Sheet Music Playing"]
           for notes in NOTES
             if notes.x_pos == BUTTONS["Pointer Position"]
@@ -429,12 +427,12 @@ def play_sheet_music
               end
               last_note_type = notes.note_type
               if notes.note_type == NoteType::SIXTEENTH
-                last_note_type += 1
+                last_note_type += 1 #divide time_to_wait by 4 if it's a 16th note
               end
             end
           end
           time_to_wait = (SECONDS / BUTTONS["BPM"]) / last_note_type
-          if a_note_found
+          if a_note_found # no note at the pointer position = skip sleeping
             sleep time_to_wait
             while BUTTONS["Sheet Music Paused"]
               sleep 0.3
@@ -443,6 +441,7 @@ def play_sheet_music
           BUTTONS["Pointer Position"] += 80
           a_note_found = false
         end
+        # the function calls itself again if it's set to repeat
         if BUTTONS["Repeat"] and BUTTONS["Sheet Music Playing"] and !BUTTONS["Sheet Music Paused"]
           BUTTONS["Pointer Position"] = 200
           BUTTONS["Sheet Music Playing"] = false
@@ -485,6 +484,8 @@ def select_note(note_number)
   BUTTONS["Note Type Selected"] = note_number
 end
 
+# create an instance of a record Note
+# add attributes to it based on buttons selected and mouse position
 def create_note(mouse_x, mouse_y)
   note_x = return_note_x(mouse_x)
   note_value_index = return_note_y(mouse_y)
@@ -506,12 +507,14 @@ def create_note(mouse_x, mouse_y)
       note.sound = Gosu::Sample.new("pianonotes/#{note.note}.mp3")
       note.sound.play
     else
+      # if a note is a rest it should have no sound
       note.sound = nil
     end
     for notes in NOTES
       if notes.x_pos == note.x_pos
         notes.note_type = note.note_type
       end
+      # prevents duplicate notes
       if notes.x_pos == note.x_pos and notes.y_pos == note.y_pos
         NOTES.delete(notes)
       end
@@ -557,7 +560,10 @@ def return_note_x(mouse_x)
   return index
 end
 
-# takes mouse_y coordinate and returns the y value for a Note as well as the note associated with it
+# takes mouse_y coordinate
+# returns an array that holds:
+# the y_pos value for the Note
+# plus the array index the Note should use to get it's string value e.g. C5
 def return_note_y(mouse_y)
   index = 200
   value = 1
@@ -644,7 +650,7 @@ def convert_string_to_boolean(string)
   string == "true"
 end
 
-def clear_sheet_music()
+def clear_sheet_music
   # for some reason again doing this once does not delete every note in NOTES
   # so I have wrapped it in a while loop
   while NOTES.length > 0
@@ -663,6 +669,7 @@ class MusicNotesMain < Gosu::Window
     self.caption = "MusicNotes"
 	end
 
+  # nothing happens in update, everything is controlled by the cursor
   def update
   end
 
@@ -670,7 +677,7 @@ class MusicNotesMain < Gosu::Window
     draw_background()
     draw_ui()
     draw_sheet()
-    draw_selected()
+    draw_selected_note()
     draw_sharp_or_flat_selection()
     draw_pointer()
     for note in NOTES
