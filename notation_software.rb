@@ -19,7 +19,7 @@ module NoteType
   QUARTER, EIGTH, SIXTEENTH = *1..3
 end
 
-WIDTH, HEIGHT = 2100, 800
+WIDTH, HEIGHT = 1780, 800
 UI_COLOUR = Gosu::Color.new(0xFF1EB1FA)
 BLACK = Gosu::Color::BLACK
 WHITE = Gosu::Color::WHITE
@@ -266,7 +266,7 @@ def draw_ui
   FONT.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("MusicNotes: A simple music notation software.", 10, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-  FONT.draw_text("Made by Donovan Quilty", 1700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text("Made by Donovan Quilty", 1450, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text(BUTTONS["Saved"], 700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
@@ -281,7 +281,7 @@ def draw_sheet
     Gosu.draw_line(0, line_y, BLACK, WIDTH, line_y, BLACK, ZOrder::SHEET)
     line_y += 50
   end
-  while bar_x < 2000
+  while bar_x < WIDTH
     Gosu.draw_line(bar_x, 300, BLACK, bar_x, 500, BLACK, ZOrder::SHEET)
     Gosu.draw_line(bar_x + 1, 300, BLACK, bar_x + 1, 500, BLACK, ZOrder::SHEET)
     bar_x += 320
