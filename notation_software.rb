@@ -19,7 +19,7 @@ module NoteType
   QUARTER, EIGTH, SIXTEENTH = *1..3
 end
 
-WIDTH, HEIGHT = 1600, 800
+WIDTH, HEIGHT = 2100, 800
 UI_COLOUR = Gosu::Color.new(0xFF1EB1FA)
 BLACK = Gosu::Color::BLACK
 WHITE = Gosu::Color::WHITE
@@ -238,14 +238,14 @@ end
 
 #draw the white background
 def draw_background
-  Gosu.draw_quad(0, 0, WHITE, 1600, 0, WHITE, 0, 800, WHITE, 1600, 800, WHITE, ZOrder::BACKGROUND, mode =:default)
+  Gosu.draw_quad(0, 0, WHITE, WIDTH, 0, WHITE, 0, HEIGHT, WHITE, WIDTH, HEIGHT, WHITE, ZOrder::BACKGROUND, mode =:default)
 end
 
 #draw the ui components
 def draw_ui
   #top and bottom panels
-  Gosu.draw_quad(0, 0, UI_COLOUR, 1600, 0, UI_COLOUR, 0, 150, UI_COLOUR, 1600, 150, UI_COLOUR, ZOrder::UI)
-  Gosu.draw_quad(0, 750, UI_COLOUR, 1600, 750, UI_COLOUR, 0, 800, UI_COLOUR, 1600, 800, UI_COLOUR, ZOrder::UI)
+  Gosu.draw_quad(0, 0, UI_COLOUR, WIDTH, 0, UI_COLOUR, 0, 150, UI_COLOUR, WIDTH, 150, UI_COLOUR, ZOrder::UI)
+  Gosu.draw_quad(0, 750, UI_COLOUR, WIDTH, 750, UI_COLOUR, 0, HEIGHT, UI_COLOUR, WIDTH, HEIGHT, UI_COLOUR, ZOrder::UI)
   # play, stop, repeat and pause buttons
   Gosu.draw_triangle(100, 80, BLACK, 25, 125, BLACK, 25, 40, BLACK, ZOrder::UI)
   Gosu.draw_quad(150, 50, BLACK, 225, 50, BLACK, 225, 125, BLACK, 150, 125, BLACK, ZOrder::UI)
@@ -266,7 +266,7 @@ def draw_ui
   FONT.draw_text("BPM:", NOTES_UI_START + 950, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text(BUTTONS["BPM"], NOTES_UI_START + 1050, 70, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("MusicNotes: A simple music notation software.", 10, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
-  FONT.draw_text("Made by Donovan Quilty", 1300, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
+  FONT.draw_text("Made by Donovan Quilty", 1700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("Loop", 1220, 40, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text(BUTTONS["Saved"], 700, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
   FONT.draw_text("Load", 900, 760, ZOrder::UI, scale_x = 1, scale_y = 1, BLACK)
@@ -278,10 +278,10 @@ def draw_sheet
   line_y = 300
   bar_x = 500
   while line_y <= 500
-    Gosu.draw_line(0, line_y, BLACK, 1600, line_y, BLACK, ZOrder::SHEET)
+    Gosu.draw_line(0, line_y, BLACK, WIDTH, line_y, BLACK, ZOrder::SHEET)
     line_y += 50
   end
-  while bar_x < 1600
+  while bar_x < 2000
     Gosu.draw_line(bar_x, 300, BLACK, bar_x, 500, BLACK, ZOrder::SHEET)
     Gosu.draw_line(bar_x + 1, 300, BLACK, bar_x + 1, 500, BLACK, ZOrder::SHEET)
     bar_x += 320
@@ -420,7 +420,7 @@ def play_sheet_music
       last_note_type = NoteType::QUARTER
       a_note_found = false
       Thread.new do      
-        while BUTTONS["Pointer Position"] <= 1600 and BUTTONS["Sheet Music Playing"]
+        while BUTTONS["Pointer Position"] <= WIDTH and BUTTONS["Sheet Music Playing"]
           for notes in NOTES
             if notes.x_pos == BUTTONS["Pointer Position"]
               a_note_found = true
@@ -547,7 +547,7 @@ end
 def return_note_x(mouse_x)
   index = 200
   note_value_found = false
-  while note_value_found != true and index < 1600
+  while note_value_found != true and index < WIDTH - 100
    if mouse_x > index - 40 and mouse_x <= index + 40
       note_value_found = true    
    else
