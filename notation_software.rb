@@ -457,6 +457,7 @@ end
 # stops the sheet music from being played
 def stop_sheet_music
   BUTTONS["Sheet Music Playing"] = false
+  BUTTONS["Sheet Music Paused"] = false
 end
 
 # toggles whether the sheet music should be paused
